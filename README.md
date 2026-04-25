@@ -66,8 +66,17 @@ Redeploy after adding variables.
 ### Step D: Register Telegram webhook
 Use your Vercel production domain.
 
-Windows:
+Windows PowerShell:
 ```powershell
+$env:TELEGRAM_TOKEN="your_token_here"
+$env:PUBLIC_WEBHOOK_BASE_URL="https://your-project.vercel.app"
+$env:TELEGRAM_WEBHOOK_SECRET="your_secret_here"
+npm run webhook:set
+npm run webhook:info
+```
+
+Windows CMD:
+```bat
 set TELEGRAM_TOKEN=your_token_here
 set PUBLIC_WEBHOOK_BASE_URL=https://your-project.vercel.app
 set TELEGRAM_WEBHOOK_SECRET=your_secret_here
