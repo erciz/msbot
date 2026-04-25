@@ -11,6 +11,7 @@ import {
   getEngine,
   parseTelegramCommand,
   resolveCommandText,
+  shouldReplyToMessageByPolicy,
 } from "./assistantCore.js";
 
 function isMainModule() {
@@ -47,6 +48,9 @@ function registerCommand(bot, command) {
 
 function startPollingBot() {
   const token = ensureToken();
+  const groupMentionOnly = String(process.env.GROUP_MENTION_ONLY || "false").toLowerCase() === "true";
+  let botUsername = String(process.env.BOT_USERNAME || "").replace(/^@/, "").toLowerCase();
+  let botId = Number(process.env.BOT_ID || 0) || 0;
 
   let engine;
   try {
@@ -60,6 +64,19 @@ function startPollingBot() {
 
   const bot = new TelegramBot(token, { polling: true });
 
+  bot.getMe()
+    .then(me => {
+      if (me?.username) botUsername = String(me.username).toLowerCase();
+      if (me?.id) botId = Number(me.id) || botId;
+      console.log(`  Bot identity: @${botUsername || "unknown"}`);
+      if (groupMentionOnly && !botUsername) {
+        console.log("  Mention-only mode is enabled but bot username is unknown.");
+      }
+    })
+    .catch(err => {
+      console.error(`[WARN] Could not read bot identity: ${err.message}`);
+    });
+
   registerCommand(bot, "/start");
   registerCommand(bot, "/help");
   registerCommand(bot, "/links");
@@ -71,6 +88,23 @@ function startPollingBot() {
     const text = String(msg.text).trim();
     const command = parseTelegramCommand(text);
     if (command) return;
+
+    const replyFrom = msg.reply_to_message?.from;
+    const replyToBot = !!replyFrom && (
+      (botId && Number(replyFrom.id) === botId)
+      || (botUsername && String(replyFrom.username || "").toLowerCase() === botUsername)
+    );
+
+    const shouldReply = shouldReplyToMessageByPolicy({
+      chatType: msg.chat?.type,
+      text,
+      command,
+      botUsername,
+      isReplyToBot: replyToBot,
+      groupMentionOnly,
+    });
+
+    if (!shouldReply) return;
 
     const chatId = msg.chat.id;
     const user = msg.from?.username || msg.from?.id || "unknown";
@@ -99,6 +133,7 @@ function startPollingBot() {
   console.log("=".repeat(50));
   console.log("  MoonSale Telegram Bot — Running");
   console.log(`  KB entries: ${engine.entries.length}`);
+  console.log(`  Group mention-only: ${groupMentionOnly ? "ON" : "OFF"}`);
   console.log("  Waiting for messages...");
   console.log("=".repeat(50) + "\n");
 }

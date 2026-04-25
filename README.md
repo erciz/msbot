@@ -27,7 +27,7 @@ npm run search
 ### Run long polling bot locally
 Windows:
 ```powershell
-set TELEGRAM_TOKEN=your_token_here
+$env:TELEGRAM_TOKEN="your_token_here"
 npm run bot
 ```
 
@@ -36,6 +36,27 @@ Mac/Linux:
 export TELEGRAM_TOKEN=your_token_here
 npm run bot
 ```
+
+### Run no-webhook mode (direct Telegram API polling)
+This mode uses `getUpdates` and `sendMessage` directly.
+
+Windows PowerShell:
+```powershell
+$env:TELEGRAM_TOKEN="your_token_here"
+npm run bot:api
+```
+
+Mac/Linux:
+```bash
+export TELEGRAM_TOKEN=your_token_here
+npm run bot:api
+```
+
+Notes:
+- This mode auto-disables webhook on startup (`deleteWebhook`) so polling can work.
+- Keep the process running continuously (local machine/VPS).
+- If Telegram is blocked on your network, run this on an unblocked VPS or different network.
+- Optional: set `TELEGRAM_API_BASE_URL` if you use a reachable Telegram API proxy endpoint.
 
 ## 2. Deploy on Vercel (recommended)
 
@@ -135,6 +156,19 @@ Send normal text messages like:
 
 Bot will reply in group threads/messages when it receives text updates.
 
+### Optional: Mention-only mode in groups
+If you want less spam in large groups, enable mention-only mode.
+
+Add in `.env`:
+```env
+GROUP_MENTION_ONLY=true
+BOT_USERNAME=MoonsaleAssistantBot
+```
+
+Behavior:
+- Private chat: replies normally
+- Group chat: replies only when tagged (`@MoonsaleAssistantBot`) or when users reply directly to a bot message
+
 ## 5. Useful scripts
 
 ```bash
@@ -142,6 +176,7 @@ npm run scrape
 npm run build
 npm run search
 npm run bot
+npm run bot:api
 npm run webhook:set
 npm run webhook:info
 ```
@@ -168,6 +203,14 @@ Check:
 
 ### Bot replies in private chat but not group
 Most common reason: privacy mode is still enabled.
+
+### Telegram is blocked on local network
+If `api.telegram.org` resolves to `127.0.0.1` or `::1`, Telegram API is blocked on your network.
+
+Use one of these:
+1. Run bot on an unblocked VPS (recommended)
+2. Use a different network/hotspot
+3. Use a reachable Telegram API proxy endpoint and set `TELEGRAM_API_BASE_URL`
 
 ## 8. Updating knowledge base later
 

@@ -8,10 +8,15 @@ import {
   buildAssistantReply,
   parseTelegramCommand,
   resolveCommandText,
+  shouldReplyToMessageByPolicy,
 } from "../assistantCore.js";
 
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || "";
+const GROUP_MENTION_ONLY = String(process.env.GROUP_MENTION_ONLY || "false").toLowerCase() === "true";
+const BOT_USERNAME_ENV = String(process.env.BOT_USERNAME || "").replace(/^@/, "").toLowerCase();
+
+let botIdentityPromise;
 
 function getHeader(req, name) {
   if (!req?.headers) return "";
@@ -54,6 +59,32 @@ async function sendTelegramMessage(chatId, text, replyToMessageId) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
   });
+}
+
+async function getBotIdentity() {
+  if (BOT_USERNAME_ENV) {
+    return { username: BOT_USERNAME_ENV, id: 0 };
+  }
+
+  if (!botIdentityPromise) {
+    botIdentityPromise = (async () => {
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${TOKEN}/getMe`);
+        const data = await res.json();
+
+        if (!data?.ok || !data?.result) return { username: "", id: 0 };
+
+        return {
+          username: String(data.result.username || "").toLowerCase(),
+          id: Number(data.result.id || 0) || 0,
+        };
+      } catch {
+        return { username: "", id: 0 };
+      }
+    })();
+  }
+
+  return botIdentityPromise;
 }
 
 export default async function handler(req, res) {
@@ -101,8 +132,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    let replyText = "";
     const command = parseTelegramCommand(text);
+    const botIdentity = await getBotIdentity();
+    const replyFrom = message.reply_to_message?.from;
+    const replyToBot = !!replyFrom && (
+      (botIdentity.id && Number(replyFrom.id) === botIdentity.id)
+      || (botIdentity.username && String(replyFrom.username || "").toLowerCase() === botIdentity.username)
+    );
+
+    const shouldReply = shouldReplyToMessageByPolicy({
+      chatType: message.chat?.type,
+      text,
+      command,
+      botUsername: botIdentity.username,
+      isReplyToBot: replyToBot,
+      groupMentionOnly: GROUP_MENTION_ONLY,
+    });
+
+    if (!shouldReply) {
+      res.status(200).json({ ok: true, skipped: "mention_policy" });
+      return;
+    }
+
+    let replyText = "";
 
     if (command) {
       replyText = resolveCommandText(command);

@@ -9,6 +9,7 @@
     "build":  "node buildKnowledgeBase.js",
     "search": "node searchEngine.js",
     "bot":    "node bot.js",
+    "bot:api": "node pollingApiBot.js",
     "setup":  "node scraper.js && node buildKnowledgeBase.js",
     "webhook:set": "node setWebhook.js",
     "webhook:info": "node getWebhookInfo.js"

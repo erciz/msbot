@@ -173,6 +173,7 @@ const RESERVED_GENERIC_SINGLE_TERMS = new Set([
 const CHAT_CONTEXT = new Map();
 const MAX_CHAT_CONTEXTS = 2000;
 const FOLLOW_UP_CONTEXT_TTL_MS = 30 * 60 * 1000;
+const GROUP_MENTION_ONLY = String(process.env.GROUP_MENTION_ONLY || "false").toLowerCase() === "true";
 
 let engineSingleton;
 let projectLookupTermsCache;
@@ -436,4 +437,42 @@ export function parseTelegramCommand(text) {
   const m = String(text || "").trim().match(/^\/(start|help|links|about)(?:@[a-zA-Z0-9_]+)?\b/i);
   if (!m) return "";
   return `/${m[1].toLowerCase()}`;
+}
+
+function normalizeUsername(username) {
+  return String(username || "").trim().replace(/^@/, "").toLowerCase();
+}
+
+function hasMention(text, username) {
+  const u = normalizeUsername(username);
+  if (!u) return false;
+
+  const escaped = u.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`@${escaped}\\b`, "i");
+  return re.test(String(text || ""));
+}
+
+export function shouldReplyToMessageByPolicy({
+  chatType,
+  text,
+  command,
+  botUsername,
+  isReplyToBot = false,
+  groupMentionOnly,
+}) {
+  const mentionOnly = typeof groupMentionOnly === "boolean" ? groupMentionOnly : GROUP_MENTION_ONLY;
+
+  if (!mentionOnly) return true;
+
+  const type = String(chatType || "").toLowerCase();
+  const isGroup = type === "group" || type === "supergroup";
+  if (!isGroup) return true;
+
+  // Always allow explicit bot commands.
+  if (command) return true;
+
+  // In mention-only mode, replying to the bot is also allowed.
+  if (isReplyToBot) return true;
+
+  return hasMention(text, botUsername);
 }
