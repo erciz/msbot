@@ -1,0 +1,10 @@
+PAGE: Deploy a BEP-20 / ERC-20 Token | MoonSale
+URL: https://www.moonsale.app/create-token
+CATEGORY: tools
+============================================================
+
+=== HEADINGS ===
+# Create Token
+
+=== CONTENT ===
+Deploy a BEP-20 token on BNB Chain in seconds.

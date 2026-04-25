@@ -1,0 +1,23 @@
+PAGE: MoonSale: BNB Chain & Ethereum Token Launchpad
+URL: https://www.moonsale.app/
+CATEGORY: core
+============================================================
+
+=== HEADINGS ===
+# Serious projects.
+Serious investors.
+## Every contract. Fully audited.
+Zero critical issues found.
+## Built different. Runs on-chain.
+## From idea to listed token, in 4 steps.
+## What makes MoonSale different?
+## Frequently Asked Questions
+## Ready to launch your project?
+
+=== CONTENT ===
+The open launchpad for BNB Chain and Ethereum. Fixed-rate presales and fair launches. Atomic deploy, auto liquidity locking, on-chain refunds, early withdrawal protection, token vesting, and admin-enforced security rules. All in one platform.
+All MoonSale platform contracts underwent independent security audits before mainnet deployment. Your funds interact only with reviewed, verified code.
+Most launchpads are just websites with a Stripe account. MoonSale is a set of auditable smart contracts. Every action is a transaction.
+A quick look at what separates a real launchpad from the rest.
+Everything you need to know before launching or investing.
+No approval. No gatekeeping. Deploy a presale or fair launch on BNB Chain or Ethereum in minutes, with built-in security rules that protect your investors automatically.

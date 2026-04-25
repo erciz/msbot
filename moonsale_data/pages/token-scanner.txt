@@ -1,0 +1,10 @@
+PAGE: Free Token Scanner | MoonSale
+URL: https://www.moonsale.app/token-scanner
+CATEGORY: tools
+============================================================
+
+=== HEADINGS ===
+# Token Scanner
+
+=== CONTENT ===
+Paste any contract address to check for honeypots, hidden owners, dangerous mint functions, tax rates, and top holder concentration. Powered by Moonsale AI.

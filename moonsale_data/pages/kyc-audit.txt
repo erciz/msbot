@@ -1,0 +1,15 @@
+PAGE: KYC and Audit Verification | MoonSale
+URL: https://www.moonsale.app/kyc-audit
+CATEGORY: docs
+============================================================
+
+=== HEADINGS ===
+# KYC & Audit
+## KYC Verification
+## Smart Contract Audit
+## Common Questions
+
+=== CONTENT ===
+KYC and Audit badges are manually reviewed and assigned by the platform team. Once assigned they appear directly on your presale card, signalling trust to every investor who views it.
+Identity verification for project founders. Demonstrates that real, accountable people stand behind your project and reduces anonymous risk in the eyes of investors.
+Security review of your token smart contract covering common vulnerabilities, ownership risks, and hidden functions. The audit report is publicly linked from your presale card.

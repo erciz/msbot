@@ -1,0 +1,40 @@
+PAGE: Developer Documentation | MoonSale
+URL: https://www.moonsale.app/developer-docs
+CATEGORY: docs
+============================================================
+
+=== HEADINGS ===
+# Launch Your Token Sale on Moonsale
+## Getting Started
+## Creating a Token
+## Creating a Presale
+## Creating a Fair Launch
+## Listing Fee
+## Presale Settings Explained
+## Finalizing Your Sale
+## Cancel and Withdraw
+## Token Lock
+## Token Vesting
+## Tokenomics Creator
+## KYC and Audit
+## Fees
+## Tips for a Successful Launch
+
+=== CONTENT ===
+This guide covers everything from creating your token to running a presale or fair launch and distributing tokens to your investors.
+Before you launch, you need a few things ready. Moonsale supports both Standard Presales (fixed price, hardcap) and Fair Launches (market-determined price, no hardcap). Make sure you have all of the following before you start.
+If you do not have a token yet, you can create one directly on Moonsale using the Token Generator. Go to Developer Tools in the sidebar and click Token Generator.
+A standard presale has a fixed token price, a softcap, and a hardcap. Investors pay a known price and receive tokens when you finalize. Click Create Presale in the sidebar.
+A fair launch has no fixed token price and no hardcap. Contributors pool native tokens together and the final token price is determined at finalization based on total raised divided by the token pool. This is ideal for projects that want a fully community-driven price discovery. Click Create Fair Launch in the sidebar.
+After deploying a presale or fair launch, you must pay a listing fee before your sale page becomes publicly visible. The fee is charged in the native token of whichever chain you deploy on (BNB on BSC, ETH on Ethereum/Sepolia).
+Here is what each presale setting means so you can fill in the form confidently.
+For fair launches the key settings are Token Pool (how many tokens go up for sale) and Softcap (minimum raise for the sale to succeed). There is no token price or hardcap.
+After your sale ends and the softcap is reached, you need to finalize it manually from My Launches. Finalization adds liquidity to the DEX and makes tokens claimable for contributors. The process is the same for both presales and fair launches.
+If you have deployed a presale or fair launch but have not yet paid the listing fee (status is Pending), you can cancel it and withdraw your deposited tokens. You can also cancel an Active sale that has not yet reached its softcap.
+The Token Lock tool lets you lock any tokens (your own allocation or a team wallet) for a fixed period. This is separate from liquidity locking and is used to show investors that team tokens will not be sold early. Go to Token Lock in Developer Tools.
+Once locked, the tokens are held by the contract until the unlock date. Each lock has a shareable detail page at /token-lock/[lockId]. On the Token Lock page, your active locks appear under My Locks with a View Lock button on each card that opens its detail page directly.
+Token Vesting locks tokens and releases them gradually over time using a TGE unlock, cliff, and linear vesting model. Ideal for team allocations, advisor grants, and any situation where you want to prove long-term commitment. Go to Token Vesting in Developer Tools.
+The Tokenomics Creator is an AI-powered tool that generates a professional tokenomics allocation table and donut chart that you can export as a PDF. Use it to communicate your token distribution to investors before launch. Go to Tokenomics Creator in Developer Tools.
+Moonsale lets you apply for KYC (identity verification) and Smart Contract Audit badges that appear on your presale or fair launch page. These badges significantly increase investor confidence. Go to KYC and Audit in the sidebar.
+Here is a breakdown of the fees involved when launching on Moonsale. All fees are paid in the native token of the chain you are using (BNB on BSC, ETH on Ethereum/Sepolia).
+Here are some things that make presales and fair launches succeed on Moonsale.

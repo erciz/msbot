@@ -1,0 +1,11 @@
+PAGE: Platform Fees | MoonSale
+URL: https://www.moonsale.app/fees
+CATEGORY: docs
+============================================================
+
+=== HEADINGS ===
+# Platform Fees
+
+=== CONTENT ===
+All fees charged by MoonSale. Admin updates are reflected here automatically.
+Listing fees are paid once after deploying your project, in the native token of your chosen chain. Platform fees are enforced on-chain at finalization and are fully verifiable on-chain. No hidden fees.

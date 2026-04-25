@@ -1,0 +1,10 @@
+PAGE: Lock ERC-20 Tokens | MoonSale
+URL: https://www.moonsale.app/lock
+CATEGORY: tools
+============================================================
+
+=== HEADINGS ===
+# Token Lock
+
+=== CONTENT ===
+Lock tokens for a fixed period. Fee: 0.01 BNB.

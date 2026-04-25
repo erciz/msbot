@@ -1,0 +1,18 @@
+{
+  "name": "moonsale-bot",
+  "version": "1.0.0",
+  "description": "MoonSale 24/7 Telegram support bot — smart search, no AI cost",
+  "main": "bot.js",
+  "type": "module",
+  "scripts": {
+    "scrape": "node scraper.js",
+    "build":  "node buildKnowledgeBase.js",
+    "search": "node searchEngine.js",
+    "bot":    "node bot.js",
+    "setup":  "node scraper.js && node buildKnowledgeBase.js"
+  },
+  "dependencies": {
+    "puppeteer":   "^22.0.0",
+    "node-telegram-bot-api": "^0.66.0"
+  }
+}

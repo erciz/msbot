@@ -1,0 +1,20 @@
+PAGE: Smart Contract Audits | MoonSale
+URL: https://www.moonsale.app/ca-audits
+CATEGORY: docs
+============================================================
+
+=== HEADINGS ===
+# Smart Contract Audits
+
+=== CONTENT ===
+Independent security reviews of contracts launched or listed on Moonsale. Audits are conducted by third-party firms and verified by our team.
+
+=== PLATFORM STATS ===
+ 7
+Total Audits
+7
+Passed
+0
+Passed w/ Issues
+0
+Failed

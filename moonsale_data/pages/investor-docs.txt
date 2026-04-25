@@ -1,0 +1,33 @@
+PAGE: Investor Guide | MoonSale
+URL: https://www.moonsale.app/investor-docs
+CATEGORY: docs
+============================================================
+
+=== HEADINGS ===
+# Everything You Need to Know as an Investor
+## What is Moonsale?
+## Finding a Sale
+## How to Invest
+## Fair Launch
+## After the Sale
+## Claiming Your Tokens
+## Getting a Refund
+## Whitelist Sales
+## Token Locks and Vesting
+## Sale Statuses
+## Staying Safe
+
+=== CONTENT ===
+This guide walks you through how to find presales and fair launches, invest safely, claim your tokens, and understand what happens after a sale ends.
+Moonsale is a multi-chain token launchpad. Projects launch their tokens here before they list on a decentralized exchange. As an investor, you can participate in early sales and receive tokens once the sale succeeds.
+Moonsale supports two types of sales. A Presale has a fixed token price set by the creator. A Fair Launch lets the market determine the price: all contributors share the token pool proportionally based on how much each person contributed.
+We support BNB Smart Chain and Ethereum (plus their testnets). Every sale is a smart contract, meaning the rules are coded on-chain and cannot be changed once deployed.
+Go to the All Presales page from the sidebar. You can filter by status (Live, Upcoming, Ended), by type (Presale or Fair Launch), and by chain. Each card shows the token name, how much has been raised, and the time remaining. The page shows 12 listings by default. Click View More to load 8 additional listings at a time.
+Investing in a presale or fair launch takes just a few steps. Make sure your wallet is connected to the correct network before you start.
+A Fair Launch is different from a standard presale. Instead of a fixed token price, the price is determined at finalization by dividing the total raised by the total token pool. Everyone who contributes gets the same price per token.
+Once a sale ends or the hardcap is reached, two things can happen depending on whether the softcap was met.
+After a successful sale is finalized, go back to the sale page. You will see a Claim button where the Buy/Contribute button used to be. Click it and confirm the transaction.
+If a sale fails (softcap not reached) or is cancelled by the creator, you can get your full investment back at any time. There is no deadline on refunds.
+Some fair launches and presales have a whitelist enabled. Only wallet addresses that the creator has approved can contribute. If you try to contribute to a whitelisted sale and your wallet is not on the list, the transaction will be rejected.
+Two mechanisms protect investors after a sale ends: token locks and vesting schedules.
+Every presale and fair launch has a status badge that tells you where it is in its lifecycle.

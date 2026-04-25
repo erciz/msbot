@@ -1,0 +1,10 @@
+PAGE: Tokenomics Creator | MoonSale
+URL: https://www.moonsale.app/tokenomics-creator
+CATEGORY: tools
+============================================================
+
+=== HEADINGS ===
+# Tokenomics Creator
+
+=== CONTENT ===
+Generate optimal, healthy token distribution based on your project type.

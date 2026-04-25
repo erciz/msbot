@@ -1,0 +1,10 @@
+PAGE: Token Vesting Contracts | MoonSale
+URL: https://www.moonsale.app/vesting
+CATEGORY: tools
+============================================================
+
+=== HEADINGS ===
+# Token Vesting
+
+=== CONTENT ===
+Create linear vesting schedules with TGE unlock + cliff + duration. Fee: 0.01 BNB.

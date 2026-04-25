@@ -1,0 +1,4 @@
+PAGE: My Investments | MoonSale
+URL: https://www.moonsale.app/invested
+CATEGORY: launch
+============================================================

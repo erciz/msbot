@@ -1,0 +1,106 @@
+PAGE: MoonSale Investors | MoonSale
+URL: https://www.moonsale.app/investors
+CATEGORY: core
+============================================================
+
+=== HEADINGS ===
+# Own a share of every token launch.
+## How the money flows
+### $100 listing fee
+### 2% of all raises
+### 60% to MOON stakers
+## What could you earn?
+### Revenue Calculator
+## MOON is the backbone of the platform.
+## The DAO has real power.
+### Special Vetted Launch
+### Staking Gives You Both
+## Presale contributors are protected.
+#### Funds held in smart contracts
+#### Full refund if softcap is not met
+#### Hard cap enforcement
+#### Liquidity lock enforced on-chain
+#### Emergency withdrawal
+#### Fair launch price discovery
+## Why MoonSale wins long-term.
+#### Real revenue share
+#### Permissionless listing
+#### Dual-chain from day one
+#### DAO has real power
+## Ready to be part of MoonSale?
+
+=== CONTENT ===
+MoonSale is an EVM launchpad on BNB Chain and Ethereum. Every time a project raises funds on our platform, MOON token holders earn a direct cut. No waiting, no fake proposals. Just real revenue shared on-chain.
+Every launch on MoonSale generates two revenue streams. Sixty percent of everything goes straight to MOON stakers.
+Every project that lists a presale or fair launch pays a flat $100. Simple, upfront, no hidden charges.
+When a project raises ETH or BNB through MoonSale, 2% of the total raised amount goes to the platform.
+Of all platform revenue, 60% is distributed to MOON holders based on their staked amount.
+See your estimated earnings based on how many MOON tokens you hold and platform activity.
+Adjust the sliders to estimate what you could earn as a MOON staker. Numbers are illustrative - actual earnings depend on platform volume.
+Assumes 300,000,000 total MOON staked (30% of supply). ETH at $3,000. This is an estimate only and not a guarantee of returns.
+MOON is not just another governance token. Holding and staking MOON gives you a direct claim on platform revenue. The more the platform grows, the more stakers earn.
+Total supply is fixed at 1,000,000,000 MOON. No inflation. No surprise mints. Allocation is locked and vesting schedules are enforced on-chain.
+Most DAOs vote on things that do not matter. Ours votes on which projects earn the most trusted badge on the platform - and that has a real impact.
+Projects can apply for the Special Vetted Launch badge. This badge signals to investors that the DAO has reviewed and approved the project.
+MOON stakers vote on every SVL application. One token, one vote. Approved projects get featured placement and a prominent trust badge on the platform.
+Staking MOON gives you two things at once: a share of platform revenue and voting power in the DAO. You do not have to choose.
+The more MOON you stake, the more you earn from fees and the more weight your vote carries when evaluating SVL applications.
+When people invest in projects on MoonSale, they are not trusting a team. They are trusting code. Here is what that means in practice.
+MoonSale never holds your money. Contributions go directly into on-chain contracts that only release under defined conditions.
+If a presale fails to hit its minimum target, every contributor gets their ETH or BNB back. No questions asked.
+Once a presale hits its hard cap, the contract rejects new contributions automatically. No oversubscription.
+Project liquidity is locked at the contract level during finalization. The platform cannot override this.
+Before a presale finalizes, contributors can exit at any time. You are never forced to wait it out.
+In fair launches, no contributor has a price advantage. Everyone gets tokens at the same average clearing price.
+MOON stakers get 60% of every dollar the platform earns. Not governance tokens with no utility - actual money from actual transactions.
+Any project can list without admin approval. This creates a high volume of launches and maximizes fee revenue for stakers.
+BNB Chain and Ethereum both supported. Two of the largest EVM ecosystems, which doubles our addressable market.
+The Special Vetted Launch program gives MOON holders meaningful votes. Projects compete for a coveted badge that drives trust and traffic.
+We are talking to early investors and strategic partners right now. If you want to discuss the opportunity, reach out directly.
+
+=== FEATURE CARDS ===
+
+▸ $100 listing fee
+ Every project that lists a presale or fair launch pays a flat $100. Simple, upfront, no hidden charges.
+
+▸ 2% of all raises
+ When a project raises ETH or BNB through MoonSale, 2% of the total raised amount goes to the platform.
+
+▸ 60% to MOON stakers
+ Of all platform revenue, 60% is distributed to MOON holders based on their staked amount.
+
+▸ Special Vetted Launch
+ Projects can apply for the Special Vetted Launch badge. This badge signals to investors that the DAO has reviewed and approved the project.
+
+▸ Staking Gives You Both
+ Staking MOON gives you two things at once: a share of platform revenue and voting power in the DAO. You do not have to choose.
+
+▸ Funds held in smart contracts
+ MoonSale never holds your money. Contributions go directly into on-chain contracts that only release under defined conditions.
+
+▸ Full refund if softcap is not met
+ If a presale fails to hit its minimum target, every contributor gets their ETH or BNB back. No questions asked.
+
+▸ Hard cap enforcement
+ Once a presale hits its hard cap, the contract rejects new contributions automatically. No oversubscription.
+
+▸ Liquidity lock enforced on-chain
+ Project liquidity is locked at the contract level during finalization. The platform cannot override this.
+
+▸ Emergency withdrawal
+ Before a presale finalizes, contributors can exit at any time. You are never forced to wait it out.
+
+▸ Fair launch price discovery
+ In fair launches, no contributor has a price advantage. Everyone gets tokens at the same average clearing price.
+
+▸ Real revenue share
+ MOON stakers get 60% of every dollar the platform earns. Not governance tokens with no utility - actual money from actual transactions.
+
+▸ Permissionless listing
+ Any project can list without admin approval. This creates a high volume of launches and maximizes fee revenue for stakers.
+
+▸ Dual-chain from day one
+ BNB Chain and Ethereum both supported. Two of the largest EVM ecosystems, which doubles our addressable market.
+
+▸ DAO has real power
+ The Special Vetted Launch program gives MOON holders meaningful votes. Projects compete for a coveted badge that drives trust and traffic.

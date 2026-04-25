@@ -1,0 +1,109 @@
+PAGE: MoonSale Investors | MoonSale
+URL: https://www.moonsale.app/investors/whitepaper
+CATEGORY: discovered
+============================================================
+
+=== HEADINGS ===
+# MoonSale Whitepaper
+## 1. Executive Summary
+## 2. The Problem
+## 3. Our Approach
+### Permissionless listing
+### On-chain safety for contributors
+### Direct revenue sharing
+## 4. Platform Architecture
+### Smart contracts
+### Supported networks
+### Frontend and data layer
+## 5. Revenue Model
+## 6. MOON Token
+### Revenue sharing
+### Governance
+## 7. Tokenomics
+## 8. DAO Governance
+## 9. Special Vetted Launch
+## 10. Roadmap
+### Phase 1 - Live
+### Phase 2 - In Progress
+### Phase 3 - Planned
+## 11. Risk Factors
+
+=== CONTENT ===
+A permissionless EVM launchpad with on-chain revenue sharing for MOON token holders.
+MoonSale is an open, permissionless token launchpad built on BNB Chain and Ethereum. It allows any project to raise funds through fixed-rate presales or fair launches without needing approval from a central authority. All contracts are on-chain, all contributor protections are enforced by code, and all platform revenue is distributed automatically.
+The platform charges a $100 listing fee per presale or fair launch, and takes 2% of every amount raised. Sixty percent of all platform revenue is distributed to MOON token stakers. The remaining 40% funds platform operations, development, and treasury reserves.
+MOON is the native token of the MoonSale ecosystem. It serves two functions: revenue sharing and DAO governance. Staking MOON earns a proportional share of platform fees. Staked MOON also grants voting power in the MoonSale DAO, which controls the Special Vetted Launch program.
+The token launchpad space has a structural misalignment. Most platforms extract significant value from the projects they host - typically 5 to 8% of raises plus listing fees - but distribute little to none of this to their token holders.
+Token holders in most launchpad ecosystems receive governance over parameters that rarely change and have minimal economic impact. The token price is essentially speculation on the platform brand, not a direct claim on cash flows. This creates a disconnect between platform success and token value.
+At the same time, projects launching tokens face a choice between closed platforms that require approval and gatekeeping, or fully decentralized solutions that lack user protection features. There is a gap in the market for a platform that is both permissionless and safe for contributors.
+MoonSale takes a different position: keep listing fully permissionless, enforce contributor protections at the contract level, and share platform revenue directly with token holders. No gatekeeping for project creators. No empty promises for token holders.
+Any project can create a presale or fair launch by paying the listing fee and deploying a contract. There is no KYC requirement for project creators and no admin approval process. The burden of due diligence falls on contributors, aided by on-chain transparency and optional community vetting.
+While listing is open, contributor funds are protected by smart contracts regardless of the project's intentions. Softcap failures trigger automatic refunds. Hard caps are enforced in code. Liquidity locks are executed on-chain at finalization and cannot be overridden.
+Platform revenue flows to MOON stakers in proportion to their stake. This creates a direct economic link between platform activity and token value. When more projects launch and raise more funds, stakers earn more.
+MoonSale is a web application built on top of EVM-compatible smart contracts. The frontend is hosted on Vercel and connects to user wallets via standard EVM wallet providers (MetaMask, WalletConnect, and others). Contract interactions happen client-side, signed by the user's wallet.
+Each presale and fair launch deploys its own isolated contract. The factory contracts enforce standardized parameters including minimum/maximum contribution limits, soft and hard caps, start and end times, token distribution logic, and liquidity locking parameters.
+MoonSale operates on BNB Chain (BSC mainnet) and Ethereum mainnet. Both chains are supported simultaneously. A project on BSC raises in BNB. A project on Ethereum raises in ETH. Platform fees are collected in the native chain token.
+Project metadata, contribution records, and off-chain state are stored in a Supabase database. On-chain data is the source of truth for fund balances, contribution amounts, and contract state. The frontend reconciles both sources to present accurate information to users.
+MoonSale generates revenue through two mechanisms:
+The listing fee is currently set at $100 for the first 6 months of operation. As platform traction grows, this fee will be adjusted upward gradually to reflect the value of the MoonSale audience and listing benefits.
+Revenue distribution:
+MOON is an ERC-20 token deployed on BNB Chain and bridgeable to Ethereum. It is the native currency of the MoonSale ecosystem and serves two distinct functions.
+Users who stake MOON tokens receive a proportional share of the 60% staker pool. Distribution happens on a scheduled basis (weekly or per-epoch, determined by governance). Stakers do not need to lock tokens for a fixed period - unstaking is available at any time.
+Staked MOON tokens grant voting power in the MoonSale DAO at a ratio of one token to one vote. The primary governance function is the Special Vetted Launch program. Additional governance functions may be introduced as the platform matures, subject to community proposals.
+Total supply is fixed at 1,000,000,000 MOON. There is no inflation mechanism and no additional minting after the initial deployment.
+The MoonSale DAO is a token-weighted governance system. Any wallet with staked MOON can vote on active proposals. Proposals can be submitted by any address holding at least 1,000,000 MOON. Voting period for each proposal is 7 days. A simple majority with at least 5% of total staked MOON participating is required for a proposal to pass.
+The primary governance function in the initial phase is the Special Vetted Launch program. Broader governance functions, including platform fee adjustments, revenue distribution ratios, and treasury allocations, will be introduced in later phases.
+The Special Vetted Launch (SVL) program is a community-driven quality signal for projects listed on MoonSale. Projects can apply for the SVL badge at no additional cost. The DAO votes on whether to approve each application.
+Approved projects receive a visible "Verified by DAO" badge on their listing page, priority placement in the presale and fair launch listings, and eligibility for co-marketing from the MoonSale team.
+The SVL program does not change the fee structure. Approved projects still pay the standard 2% raise fee. The program exists to give investors a community-reviewed signal of project quality, separate from the platform's permissionless baseline.
+Investing in or holding MOON tokens involves risk. The following are key risk factors that potential investors should consider:
+Market risk: Platform revenue depends on the number of projects listing and the amounts they raise. In a bear market, fewer projects launch and average raise sizes fall. This directly reduces staker earnings.
+Smart contract risk: Despite auditing, smart contracts can contain bugs or vulnerabilities. A critical contract exploit could affect contributor funds or platform operations.
+Regulatory risk: The regulatory landscape for token sales and DeFi protocols continues to evolve. New regulations could restrict platform operations in certain jurisdictions.
+Competition: The launchpad space is competitive. Established platforms and new entrants could capture market share. MoonSale's revenue share model is a differentiator, but is not guaranteed to maintain a competitive advantage permanently.
+
+=== LISTS ===
+
+Phase 1 - Live:
+ • Presale contracts on BSC and Ethereum
+ • Fair launch contracts
+ • Token generator, locker, vesting
+ • AI-powered tokenomics creator
+ • Token scanner
+
+Phase 2 - In Progress:
+ • MOON token deployment
+ • Staking contracts
+ • Revenue distribution on-chain
+ • DAO governance module
+ • Special Vetted Launch voting
+
+Phase 3 - Planned:
+ • Multi-chain expansion (Arbitrum, Base)
+ • Launchpad mobile app
+ • Project analytics dashboard
+ • Institutional investor tools
+ • MOON cross-chain bridge
+
+=== TABLES ===
+Source | Rate | When Collected
+------------------------------------------------------------
+Listing fee | $100 per presale or fair launch | At time of listing creation
+Raise fee | 2% of total funds raised | At presale finalization
+
+Allocation | Percentage | Purpose
+------------------------------------------------------------
+MOON stakers | 60% | Distributed proportionally to staked MOON
+Operations | 20% | Infrastructure, team, ongoing development
+DAO treasury | 15% | Community-controlled growth fund
+Buyback & burn | 5% | MOON token supply reduction
+
+Allocation | Amount | Percentage | Vesting
+------------------------------------------------------------
+Staking Rewards | 250,000,000 | 25% | Distributed over 5 years via emissions
+DAO Treasury | 200,000,000 | 20% | 12-month cliff, 3-year linear vesting
+Team & Advisors | 150,000,000 | 15% | 6-month cliff, 2-year linear vesting
+Seed Round | 150,000,000 | 15% | 3-month cliff, 1-year linear vesting
+Public Sale | 150,000,000 | 15% | 100% unlocked at TGE
+Liquidity Pool | 50,000,000 | 5% | Locked 2 years in LP
+Marketing & Partners | 50,000,000 | 5% | 6-month linear vesting
