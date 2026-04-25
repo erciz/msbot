@@ -79,6 +79,15 @@ export const OFF_TOPIC_REPLY =
   "I only have information about the MoonSale platform\\. " +
   "Ask me about presales, fair launches, fees, vesting, or token tools\\! 🚀";
 
+const SPECIFIC_PRESALE_REPLY = [
+  "I can't provide specific presale details for individual projects.",
+  "If you mean a specific project, please go to /presale and search there.",
+  "📄 Source: https://moonsale.app/presale",
+  "",
+  "Always DYOR before you invest in any project.",
+  "Happy investing! 🚀",
+].join("\n");
+
 export const OPTS_MD = {
   parse_mode: "MarkdownV2",
   disable_web_page_preview: true,
@@ -148,11 +157,25 @@ const FRIENDLY_INTROS = [
 const CASUAL_EMOJIS = ["😄", "✨", "🚀", "🙌"];
 const FRIENDLY_EMOJIS = ["🙂", "✅", "💡"];
 
+const PROJECT_TERM_STOPWORDS = new Set([
+  "presale", "fair", "launch", "status", "listed", "moon", "moonsale",
+  "live", "upcoming", "filled", "failed", "cancelled", "canceled", "ended",
+  "current", "official", "listing", "source", "project", "projects", "token",
+  "tokens", "app", "www", "https", "http", "details", "detail",
+]);
+
+const RESERVED_GENERIC_SINGLE_TERMS = new Set([
+  "moonsale", "presale", "fairlaunch", "fair", "launch", "tokenomics",
+  "fees", "refund", "refunds", "liquidity", "vesting", "audit", "kyc",
+  "wallet", "metamask", "support", "help", "docs", "whitepaper", "link",
+]);
+
 const CHAT_CONTEXT = new Map();
 const MAX_CHAT_CONTEXTS = 2000;
 const FOLLOW_UP_CONTEXT_TTL_MS = 30 * 60 * 1000;
 
 let engineSingleton;
+let projectLookupTermsCache;
 
 function pick(list) {
   return list[Math.floor(Math.random() * list.length)];
@@ -163,6 +186,75 @@ export function getEngine() {
     engineSingleton = new SearchEngine();
   }
   return engineSingleton;
+}
+
+function tokenizeSimple(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function getProjectLookupTerms() {
+  if (projectLookupTermsCache) return projectLookupTermsCache;
+
+  const terms = new Set();
+  const engine = getEngine();
+
+  for (const entry of (engine.entries || [])) {
+    const tags = new Set(entry?.tags || []);
+    if (!tags.has("project_lookup")) continue;
+
+    const combined = `${entry?.title || ""} ${entry?.question || ""}`;
+    for (const token of tokenizeSimple(combined)) {
+      if (token.length < 3) continue;
+      if (!/[a-z]/.test(token)) continue;
+      if (PROJECT_TERM_STOPWORDS.has(token)) continue;
+      terms.add(token);
+    }
+
+    const source = String(entry?.source || "").toLowerCase();
+    const slugMatch = source.match(/\/(presale|fair-launch)\/([^/?#]+)/i);
+    if (!slugMatch) continue;
+
+    for (const token of slugMatch[2].split("-")) {
+      if (token.length < 3) continue;
+      if (!/[a-z]/.test(token)) continue;
+      if (PROJECT_TERM_STOPWORDS.has(token)) continue;
+      terms.add(token.toLowerCase());
+    }
+  }
+
+  projectLookupTermsCache = terms;
+  return projectLookupTermsCache;
+}
+
+function isSpecificPresaleQuery(query, topResult) {
+  const q = String(query || "").toLowerCase().trim();
+  if (!q) return false;
+
+  const queryTokens = tokenizeSimple(q);
+  if (!queryTokens.length) return false;
+
+  // Allow core platform-level questions.
+  if (/^what\s+is\s+moonsale\??$|^tell\s+me\s+about\s+moonsale\??$/.test(q)) {
+    return false;
+  }
+
+  const terms = getProjectLookupTerms();
+  const hasProjectToken = queryTokens.some(t => terms.has(t));
+  const topIsProjectLookup = !!topResult && Array.isArray(topResult.tags) && topResult.tags.includes("project_lookup");
+
+  const singleToken = queryTokens.length === 1;
+  const singleTokenProjectLike = singleToken && !RESERVED_GENERIC_SINGLE_TERMS.has(queryTokens[0]);
+  const asksSpecificDetail = /\b(status|details?|price|hardcap|softcap|buy|invest|claim|live|cancelled|canceled|upcoming|filled|failed)\b/.test(q);
+
+  if (hasProjectToken) return true;
+  if (singleTokenProjectLike && topIsProjectLookup) return true;
+  if (topIsProjectLookup && asksSpecificDetail) return true;
+
+  return false;
 }
 
 export function isGreeting(text) {
@@ -306,6 +398,18 @@ export function buildAssistantReply(chatId, query) {
 
   const engine = getEngine();
   const topResult = engine.search(q, 1)[0];
+
+  if (isSpecificPresaleQuery(q, topResult)) {
+    rememberChatContext(
+      chatId,
+      q,
+      SPECIFIC_PRESALE_REPLY,
+      { title: "Presale listings", source: "https://moonsale.app/presale" }
+    );
+
+    return { kind: "presale_guard", text: formatAnswer(SPECIFIC_PRESALE_REPLY) };
+  }
+
   const raw = engine.answer(q);
 
   if (raw.includes("don't have specific info")) {

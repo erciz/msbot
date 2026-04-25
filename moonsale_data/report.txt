@@ -1,9 +1,9 @@
 MoonSale Scrape Report
 ============================================================
-Pages scraped  : 46
-Pages failed   : 0
-Total chars    : 37,574
-Approx tokens  : ~9,394
+Pages scraped  : 45
+Pages failed   : 1
+Total chars    : 37,347
+Approx tokens  : ~9,337
 FAQ entries    : 0
 Feature cards  : 15
 
@@ -26,7 +26,6 @@ Feature cards  : 15
   ✓     274 chars  https://www.moonsale.app/token-management
   ✓     364 chars  https://www.moonsale.app/token-scanner
   ✓     290 chars  https://www.moonsale.app/tokenomics-creator
-  ✓     227 chars  https://www.moonsale.app/presale/quantifi-quant-m1xy
   ✓     218 chars  https://www.moonsale.app/presale/besti-besti-ewer
   ✓     270 chars  https://www.moonsale.app/presale/bester-bester-sni2
   ✓     408 chars  https://www.moonsale.app/presale/quantifi-quant-p3le
@@ -54,3 +53,6 @@ Feature cards  : 15
   ✓     208 chars  https://www.moonsale.app/presale/blax-blax
   ✓     210 chars  https://www.moonsale.app/presale/sofy-sofy
   ✓    9578 chars  https://www.moonsale.app/investors/whitepaper
+
+── Failed ──
+  ✗  https://www.moonsale.app/presale/quantifi-quant-m1xy  (Navigation timeout of 30000 ms exceeded)
