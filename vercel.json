@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "public",
   "functions": {
     "api/telegram.js": {
       "includeFiles": "moonsale_data/**"
