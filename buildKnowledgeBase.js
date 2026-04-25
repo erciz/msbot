@@ -12,6 +12,41 @@ import path from "path";
 
 const DATA_DIR = "./moonsale_data";
 const KB_FILE  = path.join(DATA_DIR, "knowledge_base.json");
+const CUSTOM_QA_FILE = path.join(DATA_DIR, "custom_qa.json");
+
+const CUSTOM_QA_TEMPLATE = [];
+
+function ensureCustomQAFile() {
+  if (fs.existsSync(CUSTOM_QA_FILE)) return;
+
+  fs.writeFileSync(
+    CUSTOM_QA_FILE,
+    JSON.stringify(CUSTOM_QA_TEMPLATE, null, 2),
+    "utf8"
+  );
+  console.log(`  Created custom QA file: ${CUSTOM_QA_FILE}`);
+}
+
+function loadCustomQA() {
+  ensureCustomQAFile();
+
+  try {
+    const raw = JSON.parse(fs.readFileSync(CUSTOM_QA_FILE, "utf8"));
+    if (!Array.isArray(raw)) return [];
+
+    return raw
+      .filter(item => item && typeof item === "object")
+      .map(item => ({
+        question: String(item.question || "").trim(),
+        answer: String(item.answer || "").trim(),
+        tags: Array.isArray(item.tags) ? item.tags.map(t => String(t).trim()).filter(Boolean) : ["custom"],
+      }))
+      .filter(item => item.question && item.answer);
+  } catch (err) {
+    console.log(`  ⚠  Could not parse custom QA file: ${err.message}`);
+    return [];
+  }
+}
 
 // ── Manual Q&A pairs — always included, highest priority ─────────────────────
 // Add more here any time. These are guaranteed-accurate answers.
@@ -1390,6 +1425,34 @@ function buildPageSearchText(page) {
   return cleanSearchText(page.fullText || "");
 }
 
+function parseListingMetadata(page) {
+  const source = String(page?.source || page?.url || "").trim();
+  const title = String(page?.title || "").trim();
+
+  if (!source || !title) return null;
+  if (!/\/presale\//i.test(source) && !/\/fair-launch\//i.test(source)) return null;
+
+  const cleanTitle = title
+    .replace(/\s*[|\-]\s*MoonSale.*$/i, "")
+    .replace(/\s+[|\-]\s*Moonsale.*$/i, "")
+    .trim();
+
+  const match = cleanTitle.match(
+    /^(.+?)\s*\(([^)]+)\)\s*(Presale|Fair Launch)\s*-\s*([A-Za-z0-9\s\/-]+?)$/i
+  );
+  if (!match) return null;
+
+  const [, projectNameRaw, symbolRaw, saleTypeRaw, statusRaw] = match;
+  const projectName = projectNameRaw.trim();
+  const symbol = symbolRaw.trim().toUpperCase();
+  const saleType = /fair launch/i.test(saleTypeRaw) ? "Fair Launch" : "Presale";
+  const status = statusRaw.replace(/\s+/g, " ").trim();
+
+  if (!projectName || !symbol || !status) return null;
+
+  return { projectName, symbol, saleType, status, source };
+}
+
 // ── Build the knowledge base ──────────────────────────────────────────────────
 function build() {
   console.log("\n" + "=".repeat(60));
@@ -1398,9 +1461,12 @@ function build() {
 
   const entries   = [];
   const tagIndex  = {};
-  const curatedManual = ALL_MANUAL_QA;
+  const customQA = loadCustomQA();
+  const curatedManual = [...ALL_MANUAL_QA, ...customQA];
   const manualSeen = new Set();
+  const listingSeen = new Set();
   let manualAdded = 0;
+  let listingAdded = 0;
 
   // ── 1. Manual Q&A (highest priority) ──────────────────────────────────
   for (const qa of curatedManual) {
@@ -1422,6 +1488,7 @@ function build() {
     manualAdded++;
   }
   console.log(`  Manual Q&A pairs : ${manualAdded}`);
+  console.log(`  Custom Q&A pairs : ${customQA.length}`);
 
   // ── 2. Scraped corpus ─────────────────────────────────────────────────
   const corpusPath = path.join(DATA_DIR, "corpus.json");
@@ -1431,6 +1498,28 @@ function build() {
     const corpus = JSON.parse(fs.readFileSync(corpusPath, "utf8"));
 
     for (const page of corpus) {
+      const listingMeta = parseListingMetadata(page);
+      if (listingMeta) {
+        const listingKey = `${listingMeta.projectName.toLowerCase()}::${listingMeta.symbol.toLowerCase()}::${listingMeta.saleType.toLowerCase()}::${listingMeta.source}`;
+
+        if (!listingSeen.has(listingKey)) {
+          const isPresale = listingMeta.saleType === "Presale";
+          entries.push({
+            id:       `listing_${entries.length}`,
+            type:     "qa",
+            title:    `${listingMeta.projectName} (${listingMeta.symbol}) ${listingMeta.saleType} status`,
+            question: `${listingMeta.projectName} (${listingMeta.symbol})`,
+            answer:   `${listingMeta.projectName} (${listingMeta.symbol}) is listed on MoonSale as a ${listingMeta.saleType}. Current status: ${listingMeta.status}. Official listing: ${listingMeta.source}`,
+            text:     `Q: ${listingMeta.projectName} (${listingMeta.symbol})\nA: ${listingMeta.projectName} (${listingMeta.symbol}) is listed on MoonSale as a ${listingMeta.saleType}. Current status: ${listingMeta.status}. Official listing: ${listingMeta.source}`,
+            tags:     ["project_lookup", "website_data", "status", isPresale ? "presale" : "fair_launch"],
+            source:   listingMeta.source,
+          });
+
+          listingSeen.add(listingKey);
+          listingAdded++;
+        }
+      }
+
       if (!isHighQualitySource(page)) continue;
 
       const pageText = buildPageSearchText(page);
@@ -1486,6 +1575,8 @@ function build() {
 
       console.log(`  Loaded ${String(chunks.length).padStart(3)} chunks + ${(page.faqs||[]).length} FAQs + ${(page.cards||[]).length} cards ← ${page.source}`);
     }
+
+    console.log(`  Website listings  : ${listingAdded}`);
   } else {
     console.log("  ⚠  corpus.json not found — building with manual Q&A only.");
     console.log("     Run: npm run scrape  first for better results.");
@@ -1566,6 +1657,8 @@ function build() {
       totalEntries:  entries.length,
       totalQuestions,
       manualQA:      manualAdded,
+      customQA:      customQA.length,
+      websiteListings: listingAdded,
       materializedVariants,
       scrapedChunks,
       tags:          Object.keys(tagIndex),
@@ -1579,6 +1672,8 @@ function build() {
 
   console.log(`\n  Total KB entries : ${entries.length}`);
   console.log(`  Manual Q&A       : ${manualAdded}`);
+  console.log(`  Custom Q&A       : ${customQA.length}`);
+  console.log(`  Website listings : ${listingAdded}`);
   console.log(`  Scraped chunks   : ${scrapedChunks}`);
   console.log(`  Tags indexed     : ${Object.keys(tagIndex).length}`);
   console.log(`\n  Saved → ${KB_FILE}`);

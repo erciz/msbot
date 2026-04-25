@@ -26,6 +26,33 @@ const STOP_WORDS = new Set([
   "hey","yo","sup","pls","quick","question","wondering","curious","kindly",
 ]);
 
+const QUERY_NORMALIZATION_RULES = [
+  [/\btokonomics\b|\btokanomics\b|\btokenomiks\b/gi, "tokenomics"],
+  [/\bassistent\b|\bassitstant\b|\bassistent\b/gi, "assistant"],
+  [/\bmoonsale\s+app\b/gi, "moonsale"],
+  [/\bmoon\s+sale\b/gi, "moonsale"],
+  [/\bpinksale\b/gi, "pinksale"],
+  [/\bcntract\b|\bconract\b/gi, "contract"],
+  [/\bwhtepaper\b|\bwhitepapr\b/gi, "whitepaper"],
+  [/\bpresell\b|\bpre sale\b/gi, "presale"],
+  [/\bwht\b/gi, "what"],
+  [/\bplz\b|\bpls\b/gi, "please"],
+  [/\bur\b/gi, "your"],
+  [/\bu\b/gi, "you"],
+  [/\br\b/gi, "are"],
+];
+
+function normalizeUserQuery(text) {
+  let out = String(text || "").toLowerCase();
+  for (const [pattern, replacement] of QUERY_NORMALIZATION_RULES) {
+    out = out.replace(pattern, replacement);
+  }
+  return out
+    .replace(/[^a-z0-9\s:/._-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // ── Tokeniser ─────────────────────────────────────────────────────────────────
 function tokenize(text) {
   return text
@@ -190,6 +217,10 @@ export class SearchEngine {
       marketing:   ["marketing","promote","partner"],
       url:         ["url","website","official","real"],
       revenue:     ["revenue","earnings","staker pool","make money"],
+      project_lookup: ["project","ticker","symbol","status","presale","fair launch"],
+      website_data: ["link","url","website","listing"],
+      identity:    ["who are you","ai assistant","bot"],
+      comparison:  ["vs","versus","compare"],
     };
     let boost = 0;
     for (const [tag, signals] of Object.entries(TAG_SIGNALS)) {
@@ -204,20 +235,65 @@ export class SearchEngine {
     return boost;
   }
 
+  _sourcePriorityBoost(entry, intent) {
+    const source = String(entry?.source || "");
+    const tags = new Set(entry.tags || []);
+    const isWebsite = /^https?:\/\//i.test(source);
+
+    let score = 0;
+
+    if (isWebsite) score += 0.1;
+    if (intent.asksLink && isWebsite) score += 0.55;
+    if (intent.asksSingleToken) {
+      if (tags.has("project_lookup") && isWebsite) score += 1.2;
+      else score -= 0.2;
+    }
+    if (intent.asksStatus && tags.has("status")) score += 0.35;
+    if (intent.asksComparison && !tags.has("comparison")) score -= 0.2;
+
+    return score;
+  }
+
   _detectIntent(query) {
     const q = (query || "").toLowerCase();
+    const trimmed = q.trim();
+    const reservedSingleTerms = new Set([
+      "moonsale",
+      "presale",
+      "fairlaunch",
+      "fair-launch",
+      "tokenomics",
+      "fees",
+      "refund",
+      "refunds",
+      "marketing",
+      "whitepaper",
+      "vesting",
+      "lock",
+      "audit",
+      "kyc",
+      "wallet",
+      "metamask",
+    ]);
+    const singleToken = /^[a-z0-9_-]{3,20}$/.test(trimmed) && !reservedSingleTerms.has(trimmed);
+
     return {
       asksFee: /\b(fee|fees|cost|costs|charge|charges|pricing|price)\b/.test(q),
       asksHow: /\b(how|workflow|steps|process|work|works)\b/.test(q),
       asksTestnet: /\b(testnet|testnets|sepolia)\b/.test(q),
       asksClaim: /\b(claim|claimable)\b/.test(q),
       asksRefund: /\b(refund|refunds|money\s*back)\b/.test(q),
+      asksStatus: /\b(status|live|upcoming|ended|failed|filled|cancelled|canceled|finalized|pending)\b/.test(q),
       asksRoadmap: /\b(roadmap|phase\s*1|phase\s*2|phase\s*3|planned|in\s*progress)\b/.test(q),
       asksWallet: /\b(wallet|metamask|walletconnect|connect wallet)\b/.test(q),
       asksMetaMask: /\bmetamask\b/.test(q),
       asksMarketing: /\b(marketing|promote|partner|co-marketing)\b/.test(q),
       asksUrl: /\b(real url|official url|website|official site|moonsale url)\b/.test(q),
+      asksLink: /\b(link|url|website|official site|whitepaper link|presale link)\b/.test(q),
       asksRevenue: /\b(revenue|make money|earnings|stakers?)\b/.test(q),
+      asksIdentity: /\b(who are you|who are u|who r you|who r u|are you ai|are you an ai|ai assistant|chatbot|bot)\b/.test(q),
+      asksComparison: /\b(vs|versus|compare|difference between)\b/.test(q),
+      asksSingleToken: singleToken,
       asksHardcapDefinition: /^\s*what\s+is\s+(a\s+|the\s+)?hard\s*cap\b|^\s*what\s+is\s+(a\s+|the\s+)?hardcap\b/.test(q),
       asksRefundApproval: /\b(admin|approve|approval)\b/.test(q) && /\brefund\b/.test(q),
       asksSoftcapFailure: /\bsoft\s*cap|softcap\b/.test(q) && /\b(not\s+reached|not\s+met|fail|fails|failed)\b/.test(q),
@@ -229,8 +305,7 @@ export class SearchEngine {
     };
   }
 
-  _intentAdjust(query, entry) {
-    const intent = this._detectIntent(query);
+  _intentAdjust(query, entry, intent = this._detectIntent(query)) {
     const tags = new Set(entry.tags || []);
     const answer = this._extractAnswerText(entry).toLowerCase();
     const hasFeeText = /\b(fee|fees|cost|costs|charge|charges|pricing|\$100|2%)\b/.test(answer);
@@ -318,9 +393,32 @@ export class SearchEngine {
       else score -= 0.2;
     }
 
+    if (intent.asksIdentity) {
+      if (tags.has("identity") || tags.has("support") || tags.has("general")) score += 0.55;
+    }
+
+    if (intent.asksComparison) {
+      if (tags.has("comparison")) score += 1.0;
+      else if (tags.has("general")) score += 0.15;
+    }
+
+    if (intent.asksLink) {
+      if (tags.has("url") || tags.has("whitepaper") || tags.has("support") || tags.has("website_data")) score += 0.75;
+      if (tags.has("marketing")) score += 0.2;
+    }
+
+    if (intent.asksStatus && tags.has("status")) score += 0.4;
+
+    if (intent.asksSingleToken) {
+      if (tags.has("project_lookup")) score += 1.15;
+      if (tags.has("fees") || tags.has("revenue")) score -= 0.4;
+    }
+
     if (intent.asksClaim && tags.has("claim")) score += 0.5;
     if (intent.asksRefund && tags.has("refund")) score += 0.5;
     if (intent.asksRoadmap && (tags.has("roadmap") || tags.has("whitepaper"))) score += 0.55;
+
+    score += this._sourcePriorityBoost(entry, intent);
 
     return score;
   }
@@ -353,12 +451,15 @@ export class SearchEngine {
   }
 
   search(query, topK = 3) {
-    const queryWords = tokenize(query);
+    const normalizedQuery = normalizeUserQuery(query);
+    const queryWords = tokenize(normalizedQuery);
     const queryTokens = [
       ...queryWords,
       ...bigrams(queryWords),
     ];
     if (!queryTokens.length) return [];
+
+    const intent = this._detectIntent(normalizedQuery);
 
     const queryTokenSet = new Set(queryWords);
 
@@ -368,7 +469,7 @@ export class SearchEngine {
         + this._fuzzyBonus(queryTokens, i)
         + this._tagBoost(queryTokens, entry)
         + this._questionTitleScore(queryTokenSet, i)
-        + this._intentAdjust(query, entry)
+        + this._intentAdjust(normalizedQuery, entry, intent)
       ),
       idx: i,
     }));
@@ -409,7 +510,7 @@ export class SearchEngine {
   }
 
   answer(query) {
-    const normal = (query || "").toLowerCase().trim();
+    const normal = normalizeUserQuery(query);
 
     const directRules = [
       {
@@ -432,6 +533,46 @@ export class SearchEngine {
         pattern: /^what\s+is\s+a\s+rug\s*pull\??$/,
         answer: "A rug pull is when project operators remove liquidity or abuse control to drain value, leaving investors exposed.",
       },
+      {
+        pattern: /\bwho\s+are\s+you\b|\bare\s+you\s+(an\s+)?ai(\s+assistant)?\b|\bai\s+assistant\b/,
+        answer: "I am MoonSale's docs-and-data assistant. I answer from MoonSale website content and the project knowledge base.",
+      },
+      {
+        pattern: /\bpinksale\b.*\bmoonsale\b|\bmoonsale\b.*\bpinksale\b/,
+        answer: "I can only provide reliable MoonSale information. If you want, I can break down MoonSale's launch flow, fees, refunds, and security model so you can compare objectively.",
+      },
+      {
+        pattern: /^link$|^link\s+please$|^link\s+of\s+that\s+please$|^give\s+me\s+link$|^send\s+link$/,
+        answer: "Quick MoonSale links:\n• Main app: https://moonsale.app\n• Presales: https://moonsale.app/presale\n• Fair launches: https://moonsale.app/fair-launch\n• Whitepaper: https://moonsale.app/investors/whitepaper\n• Docs: https://moonsale.app/investor-docs",
+      },
+      {
+        pattern: /\b(whitepaper)\b.*\b(link|url|website)\b|\b(link|url)\b.*\bwhitepaper\b/,
+        answer: "MoonSale whitepaper: https://moonsale.app/investors/whitepaper",
+      },
+      {
+        pattern: /\b(presale)\b.*\b(link|url|website)\b|\b(link|url)\b.*\bpresale\b/,
+        answer: "MoonSale presale page: https://moonsale.app/presale",
+      },
+      {
+        pattern: /\btokenomics\b.*\b(create|creator|link|tool|design)\b|\b(create|design)\b.*\btokenomics\b/,
+        answer: "Tokenomics Creator tool: https://moonsale.app/tokenomics-creator",
+      },
+      {
+        pattern: /^tokenomics$/,
+        answer: "Tokenomics Creator tool: https://moonsale.app/tokenomics-creator",
+      },
+      {
+        pattern: /\b(marketing\s+contact|contact\s+marketing|marketing\s+team)\b/,
+        answer: "For MoonSale marketing, contact @moonsalemarketing and @maxis0.",
+      },
+      {
+        pattern: /\b(can\s+i\s+trust|is\s+moonsale\s+safe|is\s+moonsale\s+trusted|trusted\s+platform)\b/,
+        answer: "MoonSale uses audited contracts, on-chain refunds for failed sales, and automatic liquidity locking. Always do your own research before investing in any project.",
+      },
+      {
+        pattern: /\b(community\s+happy|users\s+happy|feedback|reviews)\b/,
+        answer: "I can't measure live user sentiment directly, but you can verify project status and activity on MoonSale listings and official channels.",
+      },
     ];
 
     for (const rule of directRules) {
@@ -446,9 +587,17 @@ export class SearchEngine {
       return "MoonSale is a permissionless launchpad for BNB Chain and Ethereum where projects run presales or fair launches with on-chain refunds, liquidity locking, and investor protection rules.";
     }
 
-    const results = this.search(query, 12);
+    const results = this.search(normal, 12);
+    const isSingleToken = /^[a-z0-9_-]{3,20}$/.test(normal);
 
     if (!results.length) {
+      if (isSingleToken) {
+        return (
+          `I couldn't find a reliable MoonSale listing match for \"${normal.toUpperCase()}\" yet.\n\n` +
+          "Try the full project name or check: https://moonsale.app/presale"
+        );
+      }
+
       return (
         "I don't have specific info about that yet.\n\n" +
         "Check the official docs:\n" +
@@ -461,12 +610,27 @@ export class SearchEngine {
 
     const qaHit = [...results]
       .filter(r =>
-      (r.type === "qa" || r.type === "qa_variant" || !!r.answer)
-      && this._extractAnswerText(r).length > 20
+        (r.type === "qa" || r.type === "qa_variant" || !!r.answer)
+        && this._extractAnswerText(r).length > 20
       )
-      .sort((a, b) => b._score - a._score)[0];
+      .sort((a, b) => {
+        const aTags = new Set(a.tags || []);
+        const bTags = new Set(b.tags || []);
 
-    if (qaHit && qaHit._score > 0.08) {
+        let aRank = a._score;
+        let bRank = b._score;
+
+        if (isSingleToken) {
+          if (aTags.has("project_lookup")) aRank += 2.2;
+          if (bTags.has("project_lookup")) bRank += 2.2;
+          if (String(a.source || "").startsWith("http")) aRank += 0.4;
+          if (String(b.source || "").startsWith("http")) bRank += 0.4;
+        }
+
+        return bRank - aRank;
+      })[0];
+
+    if (qaHit && qaHit._score > (isSingleToken ? 0.01 : 0.08)) {
       let answer = this._extractAnswerText(qaHit);
       if (qaHit.source && qaHit.source.startsWith("http")) {
         answer += `\n\n📄 Source: ${qaHit.source}`;
