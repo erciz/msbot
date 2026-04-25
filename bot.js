@@ -112,6 +112,26 @@ const OFF_TOPIC_REPLY =
   "I only have information about the MoonSale platform\\. " +
   "Ask me about presales, fair launches, fees, vesting, or token tools\\! 🚀";
 
+// Compact per-chat memory for follow-up requests like "link of that please"
+const CHAT_CONTEXT = new Map();
+const MAX_CHAT_CONTEXTS = 2000;
+const FOLLOW_UP_CONTEXT_TTL_MS = 30 * 60 * 1000;
+
+const EXPLICIT_LINK_TOPIC_PATTERNS = [
+  /\bpresale\b/i,
+  /\bfair\s*launch\b/i,
+  /\bwhitepaper\b/i,
+  /\binvestor\s*docs\b/i,
+  /\bdeveloper\s*docs\b/i,
+  /\bfees?\b/i,
+  /\btokenomics\b/i,
+  /\btoken\s*scanner\b/i,
+  /\bvesting\b/i,
+  /\block\b/i,
+  /\bkyc\b/i,
+  /\baudit\b/i,
+];
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const GREETINGS = new Set([
   "hi","hello","hey","sup","yo","hola","greetings",
@@ -131,6 +151,71 @@ const OFF_TOPIC_PATTERNS = [
 
 function isOffTopic(text) {
   return OFF_TOPIC_PATTERNS.some(p => p.test(text));
+}
+
+function isFollowUpLinkRequest(text) {
+  const q = (text || "").toLowerCase().trim();
+  if (!q) return false;
+
+  const asksLink =
+    /\b(link|url|source|website)\b/.test(q)
+    || /^link\??$/.test(q)
+    || /^send\s+link\??$/.test(q)
+    || /^source\??$/.test(q);
+
+  if (!asksLink) return false;
+
+  const referencesPrevious =
+    /\b(that|it|this|above|previous|last|earlier|same)\b/.test(q)
+    || /^link\??$/.test(q)
+    || /^send\s+link\??$/.test(q)
+    || /^source\??$/.test(q)
+    || /^link\s+of\s+that(\s+please)?\??$/.test(q);
+
+  if (!referencesPrevious) return false;
+
+  return !EXPLICIT_LINK_TOPIC_PATTERNS.some(p => p.test(q));
+}
+
+function getChatContext(chatId) {
+  if (!CHAT_CONTEXT.has(chatId)) {
+    if (CHAT_CONTEXT.size >= MAX_CHAT_CONTEXTS) {
+      const oldestChatId = CHAT_CONTEXT.keys().next().value;
+      if (oldestChatId !== undefined) CHAT_CONTEXT.delete(oldestChatId);
+    }
+    CHAT_CONTEXT.set(chatId, {
+      lastQuery: "",
+      lastTopic: "",
+      lastLink: "",
+      updatedAt: 0,
+    });
+  }
+  return CHAT_CONTEXT.get(chatId);
+}
+
+function extractUrls(text) {
+  const matches = String(text || "").match(/https?:\/\/[^\s)]+/gi) || [];
+  const cleaned = matches.map(u => u.replace(/[).,!?]+$/g, ""));
+  return [...new Set(cleaned)];
+}
+
+function rememberChatContext(chatId, query, answer, topResult) {
+  const ctx = getChatContext(chatId);
+
+  const links = [];
+  if (topResult?.source && /^https?:\/\//i.test(topResult.source)) {
+    links.push(topResult.source);
+  }
+  links.push(...extractUrls(answer));
+
+  const uniqueLinks = [...new Set(links)];
+
+  ctx.lastQuery = query;
+  ctx.lastTopic = (topResult?.title || query || "").trim();
+  if (uniqueLinks.length > 0) {
+    ctx.lastLink = uniqueLinks[0];
+  }
+  ctx.updatedAt = Date.now();
 }
 
 // Escape special chars for Telegram MarkdownV2
@@ -249,6 +334,7 @@ bot.on("message", async msg => {
   const query  = msg.text.trim();
   const chatId = msg.chat.id;
   const user   = msg.from.username || msg.from.id;
+  const context = getChatContext(chatId);
 
   console.log(`[${user}] ${query}`);
 
@@ -271,14 +357,30 @@ bot.on("message", async msg => {
     return;
   }
 
+  // Follow-up link request: resolve from immediately previous topic in this chat.
+  const hasFreshContext = context.lastLink && (Date.now() - context.updatedAt <= FOLLOW_UP_CONTEXT_TTL_MS);
+
+  if (isFollowUpLinkRequest(query) && hasFreshContext) {
+    const topicText = context.lastTopic ? ` (${context.lastTopic})` : "";
+    const raw = `Here is the exact link from your previous topic${topicText}:\n📄 Source: ${context.lastLink}`;
+    const tone = detectTone(query);
+    const styled = styleAnswer(raw, tone);
+    const formatted = formatAnswer(styled);
+    bot.sendMessage(chatId, formatted, OPTS_MD);
+    return;
+  }
+
   // Search and answer
   try {
+    const topResult = engine.search(query, 1)[0];
     const raw = engine.answer(query);
 
     if (raw.includes("don't have specific info")) {
       bot.sendMessage(chatId, FALLBACK, OPTS_MD);
       return;
     }
+
+    rememberChatContext(chatId, query, raw, topResult);
 
     const tone = detectTone(query);
     const styled = styleAnswer(raw, tone);
