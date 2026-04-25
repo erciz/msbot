@@ -514,6 +514,10 @@ export class SearchEngine {
 
     const directRules = [
       {
+        pattern: /^what\s+is\s+moonsale\??$|^moonsale\??$|^tell\s+me\s+about\s+moonsale\??$/,
+        answer: "MoonSale is a permissionless launchpad for BNB Chain and Ethereum where projects run presales or fair launches with on-chain refunds, automatic liquidity locking, and audited smart-contract protections.",
+      },
+      {
         pattern: /\bsoft\s*cap|softcap\b.*\b(not\s+reached|not\s+met|fail|fails|failed)\b|\b(not\s+reached|not\s+met)\b.*\bsoft\s*cap|softcap\b/,
         answer: "If softcap is not reached, the sale fails and contributors can claim full refunds directly from the smart contract.",
       },

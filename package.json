@@ -9,7 +9,9 @@
     "build":  "node buildKnowledgeBase.js",
     "search": "node searchEngine.js",
     "bot":    "node bot.js",
-    "setup":  "node scraper.js && node buildKnowledgeBase.js"
+    "setup":  "node scraper.js && node buildKnowledgeBase.js",
+    "webhook:set": "node setWebhook.js",
+    "webhook:info": "node getWebhookInfo.js"
   },
   "dependencies": {
     "puppeteer":   "^22.0.0",

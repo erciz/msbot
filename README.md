@@ -1,105 +1,171 @@
-# MoonSale Telegram Bot — Node.js
+# MoonSale Telegram Bot
 
-24/7 support bot for moonsale.app  
-Smart search engine · No AI cost · No GPU · Runs free on Render
+MoonSale support bot with smart retrieval from MoonSale data.
 
----
+This project now supports two runtimes:
+- Long polling runtime (local machine or VPS): bot.js
+- Webhook runtime for Vercel: api/telegram.js
 
-## Quick Start
+## 1. Local setup
 
-### 1. Install
-```
+### Install
+```bash
 npm install
 ```
 
-### 2. Scrape MoonSale (uses real Chrome via Puppeteer)
-```
+### Build data
+```bash
 npm run scrape
-```
-
-### 3. Build knowledge base
-```
 npm run build
 ```
 
-### 4. Test search engine
-```
+### Test answers locally
+```bash
 npm run search
 ```
-Type questions and verify answers look correct.
 
-### 5. Create Telegram bot
-- Open Telegram → search @BotFather → /newbot
-- Name it "MoonSale Assistant"
-- Copy the token BotFather gives you
-
-### 6. Run the bot
-**Windows:**
-```
+### Run long polling bot locally
+Windows:
+```powershell
 set TELEGRAM_TOKEN=your_token_here
 npm run bot
 ```
 
-**Mac / Linux:**
-```
+Mac/Linux:
+```bash
 export TELEGRAM_TOKEN=your_token_here
 npm run bot
 ```
 
----
+## 2. Deploy on Vercel (recommended)
 
-## Deploy on Render (free, 24/7)
+Important: Vercel should use webhook mode, not long polling.
 
-1. Push this folder to a GitHub repo
-2. Go to render.com → New → Web Service
-3. Connect your repo
-4. Set:
-   - Build command: `npm install && npm run scrape && npm run build`
-   - Start command: `npm run bot`
-5. Add environment variable: `TELEGRAM_TOKEN = your_token`
-6. Deploy
+### Step A: Push code to GitHub
+Commit and push your repository, including:
+- api/telegram.js
+- assistantCore.js
+- moonsale_data/knowledge_base.json
+- vercel.json
 
----
+### Step B: Create Vercel project
+1. Open Vercel dashboard.
+2. Import your GitHub repository.
+3. Framework preset: Other.
+4. Build Command: leave empty (or npm install).
+5. Output Directory: leave empty.
+6. Deploy.
 
-## File structure
+### Step C: Add environment variables in Vercel
+Project Settings -> Environment Variables:
+- TELEGRAM_TOKEN = your BotFather token
+- TELEGRAM_WEBHOOK_SECRET = any strong random string (recommended)
 
-```
-moonsale-bot-js/
-├── scraper.js            ← Scrapes moonsale.app with Puppeteer
-├── buildKnowledgeBase.js ← Builds searchable knowledge_base.json
-├── searchEngine.js       ← TF-IDF + fuzzy search (no AI)
-├── bot.js                ← Telegram bot
-├── package.json
-├── README.md
-└── moonsale_data/        ← Created after running scraper
-    ├── pages/            ← One .txt file per scraped page
-    ├── corpus.json       ← All scraped data combined
-    ├── knowledge_base.json ← Optimised for search
-    └── report.txt        ← Scrape summary
-```
+Redeploy after adding variables.
 
----
+### Step D: Register Telegram webhook
+Use your Vercel production domain.
 
-## Add more Q&A pairs
-
-Open `buildKnowledgeBase.js` and add to the `MANUAL_QA` array:
-
-```js
-{
-  question: "Your question here?",
-  answer:   "Your accurate answer here.",
-  tags:     ["presale"],
-},
+Windows:
+```powershell
+set TELEGRAM_TOKEN=your_token_here
+set PUBLIC_WEBHOOK_BASE_URL=https://your-project.vercel.app
+set TELEGRAM_WEBHOOK_SECRET=your_secret_here
+npm run webhook:set
+npm run webhook:info
 ```
 
-Then re-run `npm run build` and restart the bot.
-
----
-
-## Keep data fresh
-
-When MoonSale updates (new features, fee changes):
+Mac/Linux:
+```bash
+export TELEGRAM_TOKEN=your_token_here
+export PUBLIC_WEBHOOK_BASE_URL=https://your-project.vercel.app
+export TELEGRAM_WEBHOOK_SECRET=your_secret_here
+npm run webhook:set
+npm run webhook:info
 ```
-npm run setup   ← re-scrapes AND rebuilds in one command
+
+Expected result:
+- webhook URL ends with /api/telegram
+- getWebhookInfo shows no recent errors
+
+## 3. Telegram bot integration checklist
+
+1. Open @BotFather
+2. /newbot (if not created yet)
+3. Copy bot token
+4. Optional: /setcommands and add:
+   - start - Welcome
+   - help - Help
+   - links - Useful links
+   - about - About bot
+
+## 4. Add bot to community group and make it answer messages
+
+### Step A: Add bot to group
+- Open your group
+- Add the bot as a member
+
+### Step B: Disable privacy mode (critical)
+If privacy mode is ON, the bot only sees commands/mentions.
+
+In @BotFather:
+- /setprivacy
+- Select your bot
+- Choose Disable
+
+### Step C: Ensure message permission
+- Group settings -> bot permissions
+- Allow sending messages/replies
+
+### Step D: Test in group
+Send normal text messages like:
+- What is MoonSale?
+- tokenomics
+- QUANTIFI
+- link of that please
+
+Bot will reply in group threads/messages when it receives text updates.
+
+## 5. Useful scripts
+
+```bash
+npm run scrape
+npm run build
+npm run search
 npm run bot
+npm run webhook:set
+npm run webhook:info
+```
+
+## 6. How replies are generated
+
+- searchEngine.js: retrieval and intent logic
+- assistantCore.js: shared chat behavior, tone, follow-up link memory
+- bot.js: polling runtime
+- api/telegram.js: Vercel webhook runtime
+
+## 7. Troubleshooting
+
+### npm run bot exits with code 1
+Usually TELEGRAM_TOKEN is missing.
+
+### Webhook set works but bot does not answer
+Check:
+1. TELEGRAM_TOKEN in Vercel env
+2. TELEGRAM_WEBHOOK_SECRET matches webhook requests
+3. Bot privacy mode disabled
+4. Group permissions allow bot messages
+5. npm run webhook:info for last_error_message
+
+### Bot replies in private chat but not group
+Most common reason: privacy mode is still enabled.
+
+## 8. Updating knowledge base later
+
+Add future custom Q/A in:
+- moonsale_data/custom_qa.json
+
+Then rebuild and redeploy:
+```bash
+npm run build
 ```
