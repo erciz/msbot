@@ -1,7 +1,6 @@
 {
   "functions": {
     "api/telegram.js": {
-      "runtime": "nodejs20.x",
       "includeFiles": "moonsale_data/**"
     }
   }
