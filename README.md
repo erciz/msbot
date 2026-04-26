@@ -149,6 +149,7 @@ Behavior implemented:
    - `/startAiBot` to resume replies
 - `/stopAiBot` pauses AI replies for that user for 12h (or `AI_BOT_STOP_HOURS`).
 - `/startAiBot` resumes replies immediately.
+- If a sender posts image/media, bot sends a text-only notice and asks users to wait for admin assistance.
 
 If using Supabase persistence, create this table once:
 

@@ -20,6 +20,8 @@ import {
   ABOUT,
   FALLBACK,
   OFF_TOPIC_REPLY,
+  MEDIA_UNSUPPORTED_REPLY,
+  hasTelegramMediaContent,
 } from "./assistantCore.js";
 import { runSearchEngineRegressionSuite } from "./searchEngine.regression.js";
 
@@ -176,6 +178,27 @@ test("Does not detect 'link about presale' as follow-up", () => {
 
 test("Does not detect 'click the link' as follow-up", () => {
   assert(!isFollowUpLinkRequest("click the link"), "Should require context reference");
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 🖼️ MEDIA HANDLING TESTS
+// ═════════════════════════════════════════════════════════════════════════════
+
+test("Detects Telegram photo message as media", () => {
+  assert(hasTelegramMediaContent({ photo: [{ file_id: "abc" }] }), "Photo payload should be detected as media");
+});
+
+test("Detects Telegram document message as media", () => {
+  assert(hasTelegramMediaContent({ document: { file_id: "doc1" } }), "Document payload should be detected as media");
+});
+
+test("Does not detect plain text message as media", () => {
+  assert(!hasTelegramMediaContent({ text: "hello" }), "Plain text payload should not be treated as media");
+});
+
+test("Media unsupported reply references admin handoff", () => {
+  assertIncludes(MEDIA_UNSUPPORTED_REPLY, "admin", "Media fallback should mention admin assistance");
+  assertIncludes(MEDIA_UNSUPPORTED_REPLY, "text", "Media fallback should clarify text-only support");
 });
 
 // ═════════════════════════════════════════════════════════════════════════════

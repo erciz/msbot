@@ -113,6 +113,9 @@ export const OFF_TOPIC_REPLY =
   "I cannot assist with general crypto markets, sports, or weather\\. Ask me about presales, fair launches, token vesting, KYC, fees, token locks, or MoonSale tools\\.\n\n" +
   "What MoonSale topic would you like help with\\?";
 
+export const MEDIA_UNSUPPORTED_REPLY =
+  "📎 I currently support text messages only\\. I cannot process images or other media yet\\. An admin will assist you shortly\\.";
+
 const SPECIFIC_PRESALE_REPLY = [
   "🔍 Looking for a specific presale\\?",
   "",
@@ -142,6 +145,21 @@ const OFF_TOPIC_PATTERNS = [
   /\b(binance(?!.*moonsale)|coinbase|kraken|okx|bybit)\b/i,
   /\bweather\b/i,
   /\b(football|cricket|sports|basketball)\b/i,
+];
+
+const TELEGRAM_MEDIA_KEYS = [
+  "photo",
+  "video",
+  "animation",
+  "document",
+  "audio",
+  "voice",
+  "video_note",
+  "sticker",
+  "contact",
+  "location",
+  "venue",
+  "poll",
 ];
 
 const EXPLICIT_LINK_TOPIC_PATTERNS = [
@@ -650,11 +668,11 @@ function styleAnswer(answer, tone) {
   } else {
     // friendly - add emoji or casual opener
     const friendlyPrefixes = [
-      "✅ Clear answer: ",
-      "💡 Key details: ",
-      "📌 What to know: ",
-      "🤝 Happy to help: ",
-      "ℹ️ Summary: ",
+      "✅ Answer: ",
+      "💡 Key point: ",
+      "📌 Summary: ",
+      "ℹ️ Details: ",
+      "🤝 Guidance: ",
     ];
     const prefix = friendlyPrefixes[Math.floor(Math.random() * friendlyPrefixes.length)];
     return prefix + answer;
@@ -668,9 +686,9 @@ function sanitizeReplyText(text) {
 const GREETING_RESPONSES = [
   "Hello\\! 👋 I'm the MoonSale Assistant\\. Ask me anything about MoonSale\\.\\n\\nTry: What is MoonSale\\? or How do I create a presale\\?",
   "Welcome\\! 🌙 I can help with MoonSale presales, fair launches, vesting, fees, and token tools\\.",
-  "Hi there\\! 🚀 Need help with MoonSale launches or investor info\\?",
-  "Hey\\! 💬 Ask me about token locks, KYC, audits, or launch setup\\.",
-  "Hello\\! ✅ MoonSale Assistant is ready\\. What would you like to know\\?",
+  "Hello\\! 🚀 Need help with MoonSale launches or investor information\\?",
+  "Greetings\\! 💬 Ask me about MoonSale token locks, KYC, audits, or launch setup\\.",
+  "Welcome\\! ✅ MoonSale Assistant is ready\\. What would you like to know\\?",
 ];
 
 export function getRandomGreeting() {
@@ -899,6 +917,18 @@ export function parseTelegramCommand(text) {
   const m = String(text || "").trim().match(/^\/(start|help|links|about|stopaibot|startaibot)(?:@[a-zA-Z0-9_]+)?\b/i);
   if (!m) return "";
   return `/${m[1].toLowerCase()}`;
+}
+
+export function hasTelegramMediaContent(message) {
+  if (!message || typeof message !== "object") return false;
+
+  return TELEGRAM_MEDIA_KEYS.some(key => {
+    const value = message[key];
+    if (value === undefined || value === null) return false;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === "string") return value.length > 0;
+    return true;
+  });
 }
 
 function normalizeUsername(username) {

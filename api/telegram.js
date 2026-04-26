@@ -4,8 +4,10 @@
  */
 
 import {
+  MEDIA_UNSUPPORTED_REPLY,
   OPTS_MD,
   buildAssistantReply,
+  hasTelegramMediaContent,
   parseTelegramCommand,
   resolveCommandText,
   shouldReplyToMessageByPolicy,
@@ -143,12 +145,6 @@ export default async function handler(req, res) {
   const fromUser = message.from?.username || message.from?.first_name || "unknown";
   console.log(`[WEBHOOK] Message from @${fromUser} in ${chatType}: ${text.slice(0, 80)}`);
 
-  if (!text) {
-    console.log("[WEBHOOK] Skipped — empty text");
-    res.status(200).json({ ok: true, skipped: "empty_text" });
-    return;
-  }
-
   if (isPrivilegedTelegramUser(userId)) {
     console.log("[WEBHOOK] Skipped — privileged sender");
     res.status(200).json({ ok: true, skipped: "privileged_sender" });
@@ -156,6 +152,32 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (hasTelegramMediaContent(message)) {
+      if (await isAiPausedForUser(userId)) {
+        console.log("[WEBHOOK] Skipped media — AI paused for sender");
+        res.status(200).json({ ok: true, skipped: "sender_ai_paused" });
+        return;
+      }
+
+      console.log(`[WEBHOOK] Sending media fallback reply to chat ${message.chat.id}`);
+      const sendRes = await sendTelegramMessage(message.chat.id, MEDIA_UNSUPPORTED_REPLY, message.message_id);
+      if (!sendRes.ok) {
+        const errBody = await sendRes.text();
+        console.error(`[WEBHOOK SEND ERROR] ${sendRes.status} ${errBody}`);
+        res.status(502).json({ ok: false, error: "telegram_send_failed" });
+        return;
+      }
+
+      res.status(200).json({ ok: true, handled: "media_fallback" });
+      return;
+    }
+
+    if (!text) {
+      console.log("[WEBHOOK] Skipped — empty text");
+      res.status(200).json({ ok: true, skipped: "empty_text" });
+      return;
+    }
+
     const command = parseTelegramCommand(text);
 
     if (isAiControlCommand(command)) {

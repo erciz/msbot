@@ -15,9 +15,11 @@
 import dns from "node:dns/promises";
 import { loadDotEnvFile } from "./loadEnv.js";
 import {
+  MEDIA_UNSUPPORTED_REPLY,
   OPTS_MD,
   buildAssistantReply,
   getEngine,
+  hasTelegramMediaContent,
   parseTelegramCommand,
   resolveCommandText,
   shouldReplyToMessageByPolicy,
@@ -245,16 +247,33 @@ async function handleMessage(message) {
 
   metrics.messagesProcessed++;
 
-  const text = String(message.text || message.caption || "").trim();
-  if (!text) {
-    metrics.messagesFiltered++;
-    return;
-  }
-
   const userId = message.from?.id;
   const user = message.from?.username || message.from?.id || "unknown";
 
   if (isPrivilegedTelegramUser(userId)) {
+    metrics.messagesFiltered++;
+    return;
+  }
+
+  if (hasTelegramMediaContent(message)) {
+    if (await isAiPausedForUser(userId)) {
+      metrics.messagesFiltered++;
+      return;
+    }
+
+    try {
+      await sendTyping(message.chat.id);
+      await sendReply(message, MEDIA_UNSUPPORTED_REPLY);
+      metrics.messagesReplied++;
+    } catch (err) {
+      console.error(`[${getTimestamp()}] ❌ Error sending media fallback: ${err.message}`);
+      metrics.errors++;
+    }
+    return;
+  }
+
+  const text = String(message.text || message.caption || "").trim();
+  if (!text) {
     metrics.messagesFiltered++;
     return;
   }

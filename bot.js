@@ -6,9 +6,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 import TelegramBot from "node-telegram-bot-api";
 import {
+  MEDIA_UNSUPPORTED_REPLY,
   OPTS_MD,
   buildAssistantReply,
   getEngine,
+  hasTelegramMediaContent,
   parseTelegramCommand,
   resolveCommandText,
   shouldReplyToMessageByPolicy,
@@ -99,10 +101,18 @@ function startPollingBot() {
   registerCommand(bot, "/about");
 
   bot.on("message", async msg => {
-    if (!msg?.text) return;
+    if (!msg) return;
 
     const userId = msg.from?.id;
     if (isPrivilegedTelegramUser(userId)) return;
+
+    if (hasTelegramMediaContent(msg)) {
+      if (await isAiPausedForUser(userId)) return;
+      bot.sendMessage(msg.chat.id, MEDIA_UNSUPPORTED_REPLY, OPTS_MD);
+      return;
+    }
+
+    if (!msg?.text) return;
 
     const text = String(msg.text).trim();
     const command = parseTelegramCommand(text);
