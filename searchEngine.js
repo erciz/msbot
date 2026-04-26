@@ -34,6 +34,11 @@ const QUERY_NORMALIZATION_RULES = [
   [/\bmoon\s+sale\b/gi, "moonsale"],
   [/\bwen\b/gi, "when"],
   [/\bwats\b|\bwhats\b|\bwat's\b|\bwhts\b/gi, "what is"],
+  [/\beligiblity\b|\beligibility\b|\beligiblity\b|\beligibity\b/gi, "eligibility"],
+  [/\bresrves\b|\breserves\b/gi, "reserves"],
+  [/\bliq\s*pool\b/gi, "liquidity pool"],
+  [/\bstart\s*over\b/gi, "start over"],
+  [/\breview\s*&\s*deploy\b/gi, "review deploy"],
   [/\bcant\b|\bcan t\b/gi, "cannot"],
   [/\bdidnt\b|\bdidn t\b/gi, "did not"],
   [/\bdont\b|\bdon t\b/gi, "do not"],
@@ -738,7 +743,7 @@ export class SearchEngine {
         answer: "MoonSale is a permissionless launchpad for BNB Chain and Ethereum where projects run presales or fair launches with on-chain refunds, automatic liquidity locking, and audited smart-contract protections.",
       },
       {
-        pattern: /\bsoft\s*cap|softcap\b.*\b(not\s+reached|not\s+met|fail|fails|failed)\b|\b(not\s+reached|not\s+met)\b.*\bsoft\s*cap|softcap\b/,
+        pattern: /(?:\bsoft\s*cap\b|\bsoftcap\b).*\b(not\s+reached|not\s+met|fail|fails|failed)\b|\b(not\s+reached|not\s+met)\b.*(?:\bsoft\s*cap\b|\bsoftcap\b)/,
         answer: "If softcap is not reached, the sale fails and contributors can claim full refunds directly from the smart contract.",
       },
       {
@@ -748,6 +753,34 @@ export class SearchEngine {
       {
         pattern: /\bmetamask\b/,
         answer: "Yes. MoonSale supports MetaMask for wallet connection on supported EVM networks.",
+      },
+      {
+        pattern: /\btoken\s+failed\s+eligibility\s+check\b|\beligibility\s+check\s+failed\b|\bfailed\s+eligibility\b/,
+        answer: "A blocking eligibility rule failed. Review scanner output and resolve the specific blocked item before deploying.",
+      },
+      {
+        pattern: /\bdex\s+pair\s+reserves\b.*\bexisting\s+liquidity\b|\bpair\s+has\s+existing\s+liquidity\b|\bexisting\s+liquidity\b.*\bblocked\b/,
+        answer: "Deployment is blocked because an existing DEX pair already has liquidity. Remove that liquidity first or use a token without an already-liquid pair.",
+      },
+      {
+        pattern: /\bprice\s+at\s+softcap\b.*\b0\.0+\b|\bsoftcap\s+price\b.*\b0\.0+\b/,
+        answer: "A displayed 0.00000000 softcap price is usually UI rounding for a very small value. Fair-launch final price is still determined at finalization.",
+      },
+      {
+        pattern: /\bwhat\s+happens\s+after\s+deploy\b.*\bfair\s*launch\b|\bafter\s+deploy\b.*\bfair\s*launch\b/,
+        answer: "After deploy, tokens stay in contract, investors contribute until end time, creator finalizes if softcap is met, liquidity is added at fair price, and claims open based on vesting setup.",
+      },
+      {
+        pattern: /\btokens\s+for\s+sale\b.*\btokens\s+for\s+liquidity\b|\bdifference\b.*\btokens\s+for\s+sale\b/,
+        answer: "Tokens for Sale are for contributors. Tokens for Liquidity are for DEX pool creation at finalization.",
+      },
+      {
+        pattern: /\bunlocked\s+tokens\s+within\s+limit\b|\bplatform\s+limit\b.*\b20\s*%\b/,
+        answer: "Post-deploy unlocked wallet balance must remain within platform max threshold. If it exceeds the limit, deployment is blocked.",
+      },
+      {
+        pattern: /\bdraft\s+saved\b.*\bstart\s+over\b|\bstart\s+over\b.*\bdraft\b/,
+        answer: "Draft means current setup is temporarily saved. Start over resets builder flow, so review all fields before deploying.",
       },
       {
         pattern: /\b(connect|connected)\b.*\bwallet\b.*\b(cannot|can\s*not|can't)\b.*\b(buy|contribute|invest)\b|\bbuy\s*button\b.*\bmissing\b/,

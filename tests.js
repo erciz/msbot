@@ -12,6 +12,7 @@ import {
   isGreeting,
   isOffTopic,
   isFollowUpLinkRequest,
+  resolveCommandText,
   WELCOME,
   HELP,
   LINKS,
@@ -502,6 +503,20 @@ test("Format answer preserves or escapes links properly", () => {
   const answer = "Visit https://moonsale.app for more info";
   const formatted = formatAnswer(answer);
   assert(formatted.includes("moonsale") || formatted.includes("https"), "Should preserve link references");
+});
+
+test("Plain format reply removes Telegram escaping", () => {
+  const reply = buildAssistantReply(93, "token kaise banau", { format: "plain" });
+  assertEqual(reply.kind, "token_create_guide", "Plain mode should keep intent classification");
+  assert(!reply.text.includes("\\"), "Plain mode should not include Telegram escape backslashes");
+  assertIncludes(reply.text, "create-token", "Plain mode should preserve destination links");
+});
+
+test("Plain format command text is human-readable", () => {
+  const helpText = resolveCommandText("/help", { format: "plain" });
+  assert(helpText.length > 50, "Plain command text should not be empty");
+  assert(!helpText.includes("\\"), "Plain command text should not include Telegram escape backslashes");
+  assertIncludes(helpText, "/start", "Plain command text should include command list");
 });
 
 // ═════════════════════════════════════════════════════════════════════════════

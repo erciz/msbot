@@ -1,6 +1,9 @@
 {
   "outputDirectory": "public",
   "functions": {
+    "api/assistant.js": {
+      "includeFiles": "moonsale_data/**"
+    },
     "api/telegram.js": {
       "includeFiles": "moonsale_data/**"
     }

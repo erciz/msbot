@@ -563,5 +563,280 @@
     "question": "if you do not know the answer what should happen",
     "answer": "If no verified answer is available, ask user to wait for admin support reply and share official docs links as temporary guidance.",
     "tags": ["support", "general"]
+  },
+  {
+    "question": "what does token failed eligibility check mean in fair launch",
+    "answer": "It means the eligibility scanner found a blocking condition that must be fixed before deployment.",
+    "tags": ["fair_launch", "scanner", "security", "creator"]
+  },
+  {
+    "question": "why was this blocked dex pair reserves pair has existing liquidity",
+    "answer": "This token already has liquidity in an existing DEX pair. Launching another initial pool would create extraction risk, so deployment is blocked.",
+    "tags": ["fair_launch", "liquidity", "dex", "security", "creator"]
+  },
+  {
+    "question": "pair has existing liquidity why dangerous",
+    "answer": "Existing holders can arbitrage or drain value from a newly added pool if the launch starts with an already-liquid pair.",
+    "tags": ["liquidity", "security", "dex", "fair_launch"]
+  },
+  {
+    "question": "how to fix pair has existing liquidity block",
+    "answer": "Remove existing pair liquidity first, then re-run eligibility scan, or launch with a token that has no existing liquid pair.",
+    "tags": ["fair_launch", "liquidity", "dex", "scanner", "creator"]
+  },
+  {
+    "question": "can i launch fair launch if dex pair already has liquidity",
+    "answer": "No, not until that existing liquidity condition is resolved.",
+    "tags": ["fair_launch", "liquidity", "dex", "creator"]
+  },
+  {
+    "question": "can i bypass token eligibility scan",
+    "answer": "No. Blocking eligibility checks must pass before deployment.",
+    "tags": ["scanner", "security", "creator", "fair_launch"]
+  },
+  {
+    "question": "what does token ownership check amount mean",
+    "answer": "It shows your wallet token balance available for deposit and confirms ownership is detectable.",
+    "tags": ["token", "creator", "fair_launch", "scanner"]
+  },
+  {
+    "question": "proxy detection original contract meaning",
+    "answer": "Original contract means proxy behavior was not detected in that scan result.",
+    "tags": ["scanner", "security", "token", "creator"]
+  },
+  {
+    "question": "honeypot detection testnet not applicable meaning",
+    "answer": "That check is not available in current testnet context, so result is informational rather than pass or fail.",
+    "tags": ["scanner", "testnet", "security", "creator"]
+  },
+  {
+    "question": "transfer fee check testnet not applicable meaning",
+    "answer": "Transfer-tax behavior could not be reliably assessed in testnet mode for that scan.",
+    "tags": ["scanner", "testnet", "security", "creator"]
+  },
+  {
+    "question": "blacklist detection no blacklist found meaning",
+    "answer": "No blacklist behavior was detected in the scan context.",
+    "tags": ["scanner", "security", "token", "creator"]
+  },
+  {
+    "question": "why scanner shows ticks and arrows together",
+    "answer": "Ticks indicate passed checks; arrow-style indicators often show informational or not-applicable checks rather than hard failure.",
+    "tags": ["scanner", "support", "security", "creator"]
+  },
+  {
+    "question": "what does change token button do in fair launch creator",
+    "answer": "It exits current token context so you can select a different token and rerun eligibility flow.",
+    "tags": ["fair_launch", "creator", "token", "support"]
+  },
+  {
+    "question": "what does draft saved start over mean",
+    "answer": "Draft data is stored temporarily, and Start over resets the form flow so you can rebuild settings.",
+    "tags": ["fair_launch", "creator", "support"]
+  },
+  {
+    "question": "fair launch steps token config info deploy",
+    "answer": "Flow is Token selection, Config setup, Project Info, then Review and Deploy.",
+    "tags": ["fair_launch", "creator", "how_it_works"]
+  },
+  {
+    "question": "project name from token can i edit",
+    "answer": "Project name is auto-filled from token metadata in this flow. If token metadata is wrong, update token source details or change token.",
+    "tags": ["fair_launch", "creator", "token", "support"]
+  },
+  {
+    "question": "is logo url optional in project info",
+    "answer": "Yes, logo URL is optional but recommended for trust and presentation.",
+    "tags": ["fair_launch", "creator", "listing", "marketing"]
+  },
+  {
+    "question": "description field max length in fair launch info",
+    "answer": "The description field in that form supports up to 1500 characters.",
+    "tags": ["fair_launch", "creator", "listing", "support"]
+  },
+  {
+    "question": "is whitepaper url optional in fair launch info",
+    "answer": "Yes, whitepaper URL is optional in that project info form.",
+    "tags": ["fair_launch", "creator", "listing", "whitepaper"]
+  },
+  {
+    "question": "which project info links should i fill",
+    "answer": "Website, X, Telegram, and optional GitHub, Discord, and whitepaper should be filled with official links for better credibility.",
+    "tags": ["fair_launch", "creator", "listing", "marketing"]
+  },
+  {
+    "question": "can i continue fair launch with optional fields empty",
+    "answer": "Yes for optional fields, but complete and verified project info is strongly recommended.",
+    "tags": ["fair_launch", "creator", "listing"]
+  },
+  {
+    "question": "tokens for sale vs tokens for liquidity difference in fair launch",
+    "answer": "Tokens for Sale are allocated to contributors; Tokens for Liquidity are reserved for DEX pool creation at finalization.",
+    "tags": ["fair_launch", "creator", "liquidity", "tokenomics"]
+  },
+  {
+    "question": "how is total deposit calculated in review",
+    "answer": "Total Deposit equals Tokens for Sale plus Tokens for Liquidity.",
+    "tags": ["fair_launch", "creator", "tokenomics", "deploy"]
+  },
+  {
+    "question": "why total deposit is less than full supply",
+    "answer": "Because a small amount remains unlocked in wallet by design, as long as it stays within platform unlocked limit.",
+    "tags": ["fair_launch", "creator", "tokenomics", "security"]
+  },
+  {
+    "question": "softcap 0.01 bnb meaning in fair launch",
+    "answer": "Softcap is the minimum raise threshold required for a successful finalization.",
+    "tags": ["fair_launch", "softcap", "creator", "investor"]
+  },
+  {
+    "question": "min buy 0.01 bnb meaning",
+    "answer": "Each contribution must be at least 0.01 BNB in that configuration.",
+    "tags": ["fair_launch", "contribution", "creator", "investor"]
+  },
+  {
+    "question": "liquidity 65 percent locked 90d meaning",
+    "answer": "65% of raised funds is used for liquidity and LP lock duration is set to 90 days.",
+    "tags": ["fair_launch", "liquidity", "lock", "creator", "investor"]
+  },
+  {
+    "question": "start utc and end utc in deploy review meaning",
+    "answer": "These are sale open and close times in UTC timezone.",
+    "tags": ["fair_launch", "status", "creator", "investor"]
+  },
+  {
+    "question": "whitelist open to everyone meaning",
+    "answer": "Sale is public, so any eligible wallet on correct chain can contribute.",
+    "tags": ["fair_launch", "whitelist", "contribution", "investor"]
+  },
+  {
+    "question": "price at softcap shows 0.00000000 bnb per token why",
+    "answer": "That usually means displayed precision is rounding a very small number. The underlying fair-launch math still applies.",
+    "tags": ["fair_launch", "price_discovery", "tokenomics", "support"]
+  },
+  {
+    "question": "tokens to deposit value in review meaning",
+    "answer": "It is the exact token amount your wallet must approve and transfer to deploy the fair launch contract.",
+    "tags": ["fair_launch", "creator", "deploy", "token"]
+  },
+  {
+    "question": "platform fee 2 percent of successful raise when charged",
+    "answer": "This fee is applied only on successful raise outcome, typically at finalization stage.",
+    "tags": ["fees", "fair_launch", "creator", "finalize"]
+  },
+  {
+    "question": "is 2 percent platform fee charged if fair launch fails",
+    "answer": "The label says fee is on successful raise, so failed outcome does not trigger that success-based fee.",
+    "tags": ["fees", "fair_launch", "creator", "softcap"]
+  },
+  {
+    "question": "sufficient token balance check meaning in deploy review",
+    "answer": "It confirms your wallet has at least the exact required token amount for contract deposit.",
+    "tags": ["fair_launch", "creator", "deploy", "token"]
+  },
+  {
+    "question": "unlocked tokens within limit meaning in fair launch",
+    "answer": "After deposit, remaining wallet tokens must stay below platform max unlocked threshold.",
+    "tags": ["fair_launch", "creator", "security", "tokenomics"]
+  },
+  {
+    "question": "platform unlocked token limit 20 percent meaning",
+    "answer": "Creator cannot leave more than 20% of total supply unlocked after deployment.",
+    "tags": ["fair_launch", "creator", "security", "tokenomics"]
+  },
+  {
+    "question": "after depositing 100000 point 9 remains unlocked what does this show",
+    "answer": "It shows post-deploy remaining wallet balance and its supply percentage used for limit enforcement.",
+    "tags": ["fair_launch", "creator", "tokenomics", "deploy"]
+  },
+  {
+    "question": "can i set unlocked tokens above platform limit",
+    "answer": "No. Deployment is blocked if post-deposit unlocked amount exceeds platform threshold.",
+    "tags": ["fair_launch", "creator", "security", "tokenomics"]
+  },
+  {
+    "question": "what happens after deploy fair launch",
+    "answer": "Tokens are held in contract, investors contribute until end time, creator finalizes if softcap is met, liquidity is added at fair price, and investors claim instantly for no-vesting setup.",
+    "tags": ["fair_launch", "creator", "finalize", "liquidity", "claim"]
+  },
+  {
+    "question": "who finalizes fair launch after softcap",
+    "answer": "Creator finalizes after sale end when softcap condition is met.",
+    "tags": ["fair_launch", "finalize", "creator", "softcap"]
+  },
+  {
+    "question": "when do investors claim tokens in no vesting fair launch",
+    "answer": "After successful finalization, claims are available instantly in no-vesting configuration.",
+    "tags": ["fair_launch", "claim", "investor", "vesting"]
+  },
+  {
+    "question": "no vesting in deploy review meaning",
+    "answer": "No vesting means contributors receive fully claimable allocation at claim-open, not gradual unlock.",
+    "tags": ["fair_launch", "claim", "vesting", "investor"]
+  },
+  {
+    "question": "market sets token price in fair launch meaning",
+    "answer": "Final token price is discovered from total raised amount and total token pool at finalization.",
+    "tags": ["fair_launch", "price_discovery", "tokenomics", "investor"]
+  },
+  {
+    "question": "deposit your entire token pool upfront meaning",
+    "answer": "All launch tokens required for sale plus liquidity are deposited to contract before launch starts.",
+    "tags": ["fair_launch", "creator", "deploy", "tokenomics"]
+  },
+  {
+    "question": "if softcap is not met in fair launch what happens",
+    "answer": "Sale is unsuccessful and contributors use refund flow according to contract rules.",
+    "tags": ["fair_launch", "softcap", "refund", "investor"]
+  },
+  {
+    "question": "can i edit fair launch config after deploy",
+    "answer": "No, deploy creates immutable on-chain sale config. Reconfigure before deploy if changes are needed.",
+    "tags": ["fair_launch", "creator", "deploy", "contracts"]
+  },
+  {
+    "question": "if i remove existing pair liquidity can i retry fair launch",
+    "answer": "Yes, after resolving existing-liquidity condition, re-run scan and proceed if all blocking checks pass.",
+    "tags": ["fair_launch", "liquidity", "scanner", "creator"]
+  },
+  {
+    "question": "pair exists but empty vs pair has existing liquidity difference",
+    "answer": "Pair exists but empty has zero reserves and may be acceptable; pair has existing liquidity means non-zero reserves and can trigger block.",
+    "tags": ["liquidity", "dex", "scanner", "fair_launch", "creator"]
+  },
+  {
+    "question": "testnet not applicable checks should i worry",
+    "answer": "Not-applicable checks are expected on some testnets; still ensure all mandatory blocking checks pass.",
+    "tags": ["testnet", "scanner", "fair_launch", "security"]
+  },
+  {
+    "question": "scanner passed ownership but still blocked why",
+    "answer": "Any single blocking condition can fail deployment even if other checks pass.",
+    "tags": ["scanner", "fair_launch", "security", "creator"]
+  },
+  {
+    "question": "can i use a fresh token without existing pair to pass eligibility",
+    "answer": "Yes, a token without an already-liquid pair avoids that specific DEX-reserve blocking condition.",
+    "tags": ["fair_launch", "token", "liquidity", "scanner", "creator"]
+  },
+  {
+    "question": "where can i review all fair launch values before deploy",
+    "answer": "Use the Review and Deploy step to verify token amounts, caps, liquidity, timing, whitelist mode, and fee notes before confirming.",
+    "tags": ["fair_launch", "creator", "deploy", "support"]
+  },
+  {
+    "question": "should i convert local time to utc before setting fair launch",
+    "answer": "Yes. The launch form uses UTC, so convert local timezone carefully to avoid wrong start or end window.",
+    "tags": ["fair_launch", "status", "creator", "support"]
+  },
+  {
+    "question": "if i click start over does fair launch draft get erased",
+    "answer": "Start over resets builder flow. If draft persistence exists, always re-check every field before deploy.",
+    "tags": ["fair_launch", "creator", "support"]
+  },
+  {
+    "question": "if i change token after filling info will values reset",
+    "answer": "Changing token can alter dependent values. Re-check config, info, and deposit calculations before deploying.",
+    "tags": ["fair_launch", "creator", "token", "support"]
   }
 ]

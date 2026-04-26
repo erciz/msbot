@@ -181,14 +181,42 @@ npm run webhook:set
 npm run webhook:info
 ```
 
-## 6. How replies are generated
+## 6. Web AI Modal Endpoint (Plain Text)
+
+Use this route for website or dashboard chat modals so replies are returned in plain text (no Telegram escaping).
+
+- Route: `POST /api/assistant`
+- Default output format: `plain`
+- Optional body fields:
+   - `query` (required)
+   - `chatId` (optional, defaults to `web-modal`)
+   - `format` (optional: `plain` or `telegram`)
+
+Example:
+```bash
+curl -X POST https://your-project.vercel.app/api/assistant \
+   -H "content-type: application/json" \
+   -d '{"query":"fair launch steps token config info deploy"}'
+```
+
+Sample response:
+```json
+{
+   "ok": true,
+   "kind": "answer",
+   "text": "Flow is Token selection, Config setup, Project Info, then Review and Deploy.",
+   "format": "plain"
+}
+```
+
+## 7. How replies are generated
 
 - searchEngine.js: retrieval and intent logic
 - assistantCore.js: shared chat behavior, tone, follow-up link memory
 - bot.js: polling runtime
 - api/telegram.js: Vercel webhook runtime
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 ### npm run bot exits with code 1
 Usually TELEGRAM_TOKEN is missing.
@@ -212,7 +240,7 @@ Use one of these:
 2. Use a different network/hotspot
 3. Use a reachable Telegram API proxy endpoint and set `TELEGRAM_API_BASE_URL`
 
-## 8. Updating knowledge base later
+## 9. Updating knowledge base later
 
 Add future custom Q/A in:
 - moonsale_data/custom_qa.json
