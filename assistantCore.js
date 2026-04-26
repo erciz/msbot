@@ -94,6 +94,8 @@ Happy launching\\! 🚀
 export const FALLBACK = `
 Hmm, that one's got me scratching my circuits\\! 🤖 But no worries\\!
 
+If I still miss your exact case, please wait for the admin team to reply in chat.
+
 *Try these:*
 📝 Rephrase your question — maybe I'll catch it
 📖 [Investor Docs](https://www.moonsale.app/investor-docs)
@@ -694,50 +696,70 @@ export function formatAnswer(text) {
   return out;
 }
 
-export function buildAssistantReply(chatId, query) {
+function markdownToPlainText(text) {
+  let out = String(text || "");
+
+  out = out.replace(/\\([_*[\]()~`>#+\-=|{}.!\\])/g, "$1");
+  out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1: $2");
+  out = out.replace(/[*_~`]/g, "");
+  out = out.replace(/\r/g, "");
+  out = out.replace(/[ \t]+\n/g, "\n");
+  out = out.replace(/\n{3,}/g, "\n\n");
+
+  return out.trim();
+}
+
+function renderReplyText(text, outputFormat = "telegram") {
+  const safe = sanitizeReplyText(text);
+  if (outputFormat === "plain") {
+    return markdownToPlainText(safe);
+  }
+  return safe;
+}
+
+export function buildAssistantReply(chatId, query, options = {}) {
+  const outputFormat = String(options?.format || "telegram").toLowerCase() === "plain"
+    ? "plain"
+    : "telegram";
+  const respond = (kind, text) => ({ kind, text: renderReplyText(text, outputFormat) });
+
   const q = normalizeIncomingQuery(query);
   const context = getChatContext(chatId);
 
   if (!q) {
-    return {
-      kind: "greeting",
-      text: sanitizeReplyText(escape(getRandomGreeting())),
-    };
+    return respond("greeting", getRandomGreeting());
   }
 
   if (isGreeting(q)) {
-    return {
-      kind: "greeting",
-      text: sanitizeReplyText(escape(getRandomGreeting())),
-    };
+    return respond("greeting", getRandomGreeting());
   }
 
   if (isSmallTalkQuery(q)) {
-    return { kind: "smalltalk", text: sanitizeReplyText(escape(SMALL_TALK_REPLY)) };
+    return respond("smalltalk", escape(SMALL_TALK_REPLY));
   }
 
   if (isReceiptExtractionErrorQuery(q)) {
-    return { kind: "deploy_troubleshoot", text: sanitizeReplyText(escape(RECEIPT_EXTRACTION_ERROR_REPLY)) };
+    return respond("deploy_troubleshoot", RECEIPT_EXTRACTION_ERROR_REPLY);
   }
 
   if (isCreateTokenQuery(q)) {
-    return { kind: "token_create_guide", text: sanitizeReplyText(escape(CREATE_TOKEN_GUIDE_REPLY)) };
+    return respond("token_create_guide", CREATE_TOKEN_GUIDE_REPLY);
   }
 
   if (isCreateFairLaunchQuery(q)) {
-    return { kind: "fair_launch_create_guide", text: sanitizeReplyText(escape(CREATE_FAIR_LAUNCH_GUIDE_REPLY)) };
+    return respond("fair_launch_create_guide", CREATE_FAIR_LAUNCH_GUIDE_REPLY);
   }
 
   if (isOffTopic(q)) {
-    return { kind: "offtopic", text: sanitizeReplyText(OFF_TOPIC_REPLY) };
+    return respond("offtopic", OFF_TOPIC_REPLY);
   }
 
   if (isGroupAboutQuery(q)) {
-    return { kind: "group_info", text: sanitizeReplyText(GROUP_INFO_REPLY) };
+    return respond("group_info", GROUP_INFO_REPLY);
   }
 
   if (isMoonSaleOverviewQuery(q)) {
-    return { kind: "overview", text: sanitizeReplyText(MOONSALE_OVERVIEW_REPLY) };
+    return respond("overview", MOONSALE_OVERVIEW_REPLY);
   }
 
   const hasFreshContext = context.lastLink && (Date.now() - context.updatedAt <= FOLLOW_UP_CONTEXT_TTL_MS);
@@ -746,7 +768,7 @@ export function buildAssistantReply(chatId, query) {
     const topicText = context.lastTopic ? ` (${context.lastTopic})` : "";
     const raw = `Here is the exact link from your previous topic${topicText}:\n📄 Source: ${context.lastLink}`;
     const tone = detectTone(q);
-    return { kind: "followup", text: sanitizeReplyText(formatAnswer(styleAnswer(raw, tone))) };
+    return respond("followup", formatAnswer(styleAnswer(raw, tone)));
   }
 
   const engine = getEngine();
@@ -761,7 +783,7 @@ export function buildAssistantReply(chatId, query) {
       GENERIC_PRESALE_BROWSE_RESPONSE,
       { title: "Browse presales", source: "https://moonsale.app/presale" }
     );
-    return { kind: "presale_browse", text: sanitizeReplyText(formatAnswer(GENERIC_PRESALE_BROWSE_RESPONSE)) };
+    return respond("presale_browse", GENERIC_PRESALE_BROWSE_RESPONSE);
   }
 
   if (isSpecificPresaleQuery(q, topResult)) {
@@ -772,7 +794,7 @@ export function buildAssistantReply(chatId, query) {
       { title: "Presale listings", source: "https://moonsale.app/presale" }
     );
 
-    return { kind: "presale_guard", text: sanitizeReplyText(formatAnswer(SPECIFIC_PRESALE_REPLY)) };
+    return respond("presale_guard", SPECIFIC_PRESALE_REPLY);
   }
 
   const raw = engine.answer(q);
@@ -786,11 +808,11 @@ export function buildAssistantReply(chatId, query) {
       SPECIFIC_PRESALE_REPLY,
       { title: "Presale listings", source: "https://moonsale.app/presale" }
     );
-    return { kind: "presale_guard", text: sanitizeReplyText(formatAnswer(SPECIFIC_PRESALE_REPLY)) };
+    return respond("presale_guard", SPECIFIC_PRESALE_REPLY);
   }
 
   if (raw.includes("don't have specific info")) {
-    return { kind: "fallback", text: sanitizeReplyText(FALLBACK) };
+    return respond("fallback", FALLBACK);
   }
 
   rememberChatContext(chatId, q, raw, topResult);
@@ -800,15 +822,19 @@ export function buildAssistantReply(chatId, query) {
   const formattedText = formatAnswer(styled);
   const tip = getContextualTip(q, "answer");
   
-  return { kind: "answer", text: sanitizeReplyText(formattedText + tip) };
+  return respond("answer", formattedText + tip);
 }
 
-export function resolveCommandText(command) {
+export function resolveCommandText(command, options = {}) {
+  const outputFormat = String(options?.format || "telegram").toLowerCase() === "plain"
+    ? "plain"
+    : "telegram";
+
   const cmd = String(command || "").toLowerCase();
-  if (cmd === "/start") return sanitizeReplyText(WELCOME);
-  if (cmd === "/help") return sanitizeReplyText(HELP);
-  if (cmd === "/links") return sanitizeReplyText(LINKS);
-  if (cmd === "/about") return sanitizeReplyText(ABOUT);
+  if (cmd === "/start") return renderReplyText(WELCOME, outputFormat);
+  if (cmd === "/help") return renderReplyText(HELP, outputFormat);
+  if (cmd === "/links") return renderReplyText(LINKS, outputFormat);
+  if (cmd === "/about") return renderReplyText(ABOUT, outputFormat);
   return "";
 }
 

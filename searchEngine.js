@@ -24,6 +24,7 @@ const STOP_WORDS = new Set([
   "help","need","want","know","give","show","get","just","make","use",
   "am","been","its","also","then","than","there","their","which","more",
   "hey","yo","sup","pls","quick","question","wondering","curious","kindly",
+  "bro","bruh","wtf","omg","idk","fr","gm","anon","pls","plz","wtfffff",
 ]);
 
 const QUERY_NORMALIZATION_RULES = [
@@ -31,6 +32,15 @@ const QUERY_NORMALIZATION_RULES = [
   [/\bassistent\b|\bassitstant\b|\bassistent\b/gi, "assistant"],
   [/\bmoonsale\s+app\b/gi, "moonsale"],
   [/\bmoon\s+sale\b/gi, "moonsale"],
+  [/\bwen\b/gi, "when"],
+  [/\bwats\b|\bwhats\b|\bwat's\b|\bwhts\b/gi, "what is"],
+  [/\bcant\b|\bcan t\b/gi, "cannot"],
+  [/\bdidnt\b|\bdidn t\b/gi, "did not"],
+  [/\bdont\b|\bdon t\b/gi, "do not"],
+  [/\bconected\b|\bconected\b|\bconect\b/gi, "connected"],
+  [/\bparticipte\b/gi, "participate"],
+  [/\bmetamaskk\b/gi, "metamask"],
+  [/\bwalletconnect\b/gi, "wallet connect"],
   [/\bfairlaunch\b/gi, "fair launch"],
   [/\bpinksale\b/gi, "pinksale"],
   [/\bcntract\b|\bconract\b/gi, "contract"],
@@ -46,6 +56,7 @@ const QUERY_NORMALIZATION_RULES = [
   [/\babt\b/gi, "about"],
   [/\bhow\s+r\s+u\b/gi, "how are you"],
   [/\bplz\b|\bpls\b/gi, "please"],
+  [/\bwtf+\b|\bomg+\b|\bbruh\b|\bbro\b|\blmao\b|\blol\b|\bidk\b/gi, " "],
   [/\bur\b/gi, "your"],
   [/\bu\b/gi, "you"],
   [/\br\b/gi, "are"],
@@ -580,6 +591,21 @@ export class SearchEngine {
     return raw.trim();
   }
 
+  _hasLexicalOverlap(normalizedQuery, entry) {
+    const queryTokens = tokenize(normalizedQuery);
+    if (!queryTokens.length) return false;
+
+    const entryText = [entry?.question, entry?.title, this._extractAnswerText(entry)]
+      .filter(Boolean)
+      .join(" ");
+    const entryTokens = new Set(tokenize(entryText));
+
+    for (const t of queryTokens) {
+      if (entryTokens.has(t)) return true;
+    }
+    return false;
+  }
+
   _cleanFallbackText(text) {
     const cleaned = (text || "")
       .replace(/^PAGE:.*$/gmi, "")
@@ -724,8 +750,24 @@ export class SearchEngine {
         answer: "Yes. MoonSale supports MetaMask for wallet connection on supported EVM networks.",
       },
       {
+        pattern: /\b(connect|connected)\b.*\bwallet\b.*\b(cannot|can\s*not|can't)\b.*\b(buy|contribute|invest)\b|\bbuy\s*button\b.*\bmissing\b/,
+        answer: "If wallet is connected but buy button is missing, check the correct chain, sale status (must be Live), whitelist requirement, and min-max rules. Refresh once and reconnect wallet. If still blocked, wait for admin support with sale link + wallet address.",
+      },
+      {
+        pattern: /\b(sent|contributed|bought|buy)\b.*\b(bnb|eth)\b.*\b(tokens?)\b.*\b(not|did\s+not)\b.*\b(show|arrive|receive)\b|\bclaimed\b.*\b0\s*tokens\b/,
+        answer: "Contributed funds do not appear as tokens instantly. Tokens are claimable only after successful finalization and based on vesting schedule. If claim tx succeeded but wallet still shows zero, add token contract to wallet and verify the same contribution wallet is connected.",
+      },
+      {
         pattern: /\brug\s*pull\b.*\b(prevent|protection|avoid|safe)\b|\b(prevent|protection|avoid|safe)\b.*\brug\s*pull\b/,
         answer: "MoonSale reduces rug-risk with contract-enforced hard/soft caps, on-chain refunds on failed sales, and liquidity locking after successful finalization.",
+      },
+      {
+        pattern: /\b(dev|admin)\b.*\b(dm|direct\s*message|message)\b.*\b(send|transfer)\b.*\b(bnb|eth|usdt)\b.*\b(whitelist|allocation)\b|\bsend\s+bnb\s+for\s+whitelist\b/,
+        answer: "Treat that as a scam risk. Never send funds in DMs for whitelist or allocation. Only contribute through the official MoonSale sale page with your wallet connected.",
+      },
+      {
+        pattern: /\bextend\b.*\bliquidity\s*lock\b.*\b(live|running|active)\b|\bliquidity\s*lock\b.*\bextend\b.*\b(live|running|active)\b/,
+        answer: "Once a presale or fair launch contract is deployed and live, liquidity lock cannot be extended during live mode. You can extend or adjust lock only after finalizing the sale.",
       },
       {
         pattern: /^what\s+is\s+a\s+rug\s*pull\??$/,
@@ -771,6 +813,10 @@ export class SearchEngine {
         pattern: /\b(community\s+happy|users\s+happy|feedback|reviews)\b/,
         answer: "I can't measure live user sentiment directly, but you can verify project status and activity on MoonSale listings and official channels.",
       },
+      {
+        pattern: /\b(wen\s+moon|when\s+moon|wen\s+lambo|when\s+lambo|100x|buy\s+or\s+no\s+buy)\b/,
+        answer: "I cannot give financial advice or profit guarantees. I can help with verified MoonSale facts like sale status, tokenomics, vesting, liquidity lock, and refund conditions so you can make your own decision.",
+      },
     ];
 
     for (const rule of directRules) {
@@ -792,12 +838,12 @@ export class SearchEngine {
       if (isSingleToken) {
         return (
           `I couldn't find a reliable MoonSale listing match for \"${normal.toUpperCase()}\" yet.\n\n` +
-          "Try the full project name or check: https://moonsale.app/presale"
+          "Try the full project name or check: https://moonsale.app/presale\n\nIf this is urgent, please wait for the admin team to reply in chat."
         );
       }
 
       return (
-        "I don't have specific info about that yet.\n\n" +
+        "I don't have a verified answer for that yet. Please wait for the admin team to reply in chat.\n\n" +
         "Check the official docs:\n" +
         "• Investor docs: moonsale.app/investor-docs\n" +
         "• Developer docs: moonsale.app/developer-docs"
@@ -810,7 +856,9 @@ export class SearchEngine {
       ? top
       : null;
 
-    if (qaHit && qaHit._score > (isSingleToken ? 0.01 : 0.08)) {
+    const hasOverlap = qaHit ? this._hasLexicalOverlap(normal, qaHit) : false;
+
+    if (qaHit && qaHit._score > (isSingleToken ? 0.01 : 0.08) && (hasOverlap || isSingleToken)) {
       let answer = this._extractAnswerText(qaHit);
       if (qaHit.source && qaHit.source.startsWith("http")) {
         answer += `\n\n📄 Source: ${qaHit.source}`;
@@ -818,9 +866,18 @@ export class SearchEngine {
       return answer.trim();
     }
 
+    if (!isSingleToken && !hasOverlap) {
+      return (
+        "I don't have a verified answer for that yet. Please wait for the admin team to reply in chat.\n\n" +
+        "Check the official docs:\n" +
+        "• Investor docs: moonsale.app/investor-docs\n" +
+        "• Developer docs: moonsale.app/developer-docs"
+      );
+    }
+
     const concise = this._cleanFallbackText(this._extractAnswerText(top));
     if (!concise) {
-      return "Found some info but couldn't extract a clear answer. Check moonsale.app directly.";
+      return "Found related info but not a clean verified answer. Please wait for the admin team to reply, and check moonsale.app directly in the meantime.";
     }
 
     let combined = concise;

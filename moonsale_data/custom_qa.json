@@ -1,147 +1,567 @@
-[ 
-	{
-		"question": "Could not extract presale address from receipt",
-		"answer": "This usually means receipt parsing failed after deploy. Verify both wallet confirmations were completed, wait until the second transaction is confirmed on-chain, check explorer logs for presale creation event, refresh My Launches, and retry. If still failing, share tx hash, token address, and wallet address with support.",
-		"tags": ["presale", "deploy", "troubleshoot", "receipt", "creator"]
-	},
-	{
-		"question": "How many confirmations are required when deploying a presale?",
-		"answer": "Two confirmations are required. First you approve token transfer. Second the factory deploys your presale and pulls the exact token amount from your wallet.",
-		"tags": ["presale", "deploy", "creator", "atomic"]
-	},
-	{
-		"question": "What happens after presale deploy goes live?",
-		"answer": "Once live, investors can contribute immediately. After sale ends, anyone can finalize. On successful finalize, raised funds go to creator, tokens go to contributors, and liquidity is added to DEX automatically.",
-		"tags": ["presale", "finalize", "liquidity", "investor", "creator"]
-	},
-	{
-		"question": "What is the finalization window after sale end?",
-		"answer": "After sale end, there is a 30-day finalize window. If not finalized in time, investors can trigger emergency refund.",
-		"tags": ["presale", "finalize", "refund", "creator", "investor"]
-	},
-	{
-		"question": "What does Token Eligibility Scan check?",
-		"answer": "Eligibility scan checks ownership balance, proxy risk, blacklist behavior, transfer fee behavior, and pair state. Some checks may show not applicable on testnet.",
-		"tags": ["presale", "scanner", "security", "creator"]
-	},
-	{
-		"question": "Pair exists but empty meaning",
-		"answer": "Pair exists but empty means LP pair contract is present, but reserves are zero. It is not an error by itself for newly prepared launches.",
-		"tags": ["liquidity", "dex", "presale", "creator"]
-	},
-	{
-		"question": "What is unlocked token limit in presale checks?",
-		"answer": "MoonSale enforces a creator unlocked-token limit after depositing presale and liquidity tokens. UI shows remaining unlocked percentage and blocks config above platform limit.",
-		"tags": ["presale", "security", "creator", "tokenomics"]
-	},
-	{
-		"question": "What does sufficient token balance check mean?",
-		"answer": "It verifies your wallet has enough tokens for presale allocation plus liquidity allocation before deployment.",
-		"tags": ["presale", "creator", "deploy", "token"]
-	},
-	{
-		"question": "How to set presale rate and listing rate correctly?",
-		"answer": "Presale rate is tokens per BNB sold to investors. Listing rate is DEX rate after finalize. Listing rate is usually lower than presale rate so early buyers get entry discount and listing health is better.",
-		"tags": ["presale", "creator", "rate", "tokenomics"]
-	},
-	{
-		"question": "Why does UI show allowed listing rate range?",
-		"answer": "Allowed listing-rate range is a safety guard to prevent unhealthy listing configurations. Keep listing math within UI bounds to avoid invalid deployment settings.",
-		"tags": ["presale", "creator", "rate", "security"]
-	},
-	{
-		"question": "What is minimum liquidity percent for presale?",
-		"answer": "Platform enforces a minimum liquidity percentage in config. If value is below minimum, deployment is blocked until corrected.",
-		"tags": ["presale", "creator", "liquidity"]
-	},
-	{
-		"question": "What is minimum lock days for presale liquidity?",
-		"answer": "Platform enforces minimum lock days for LP lock. If lock duration is below minimum, config must be increased before deployment.",
-		"tags": ["presale", "creator", "lock", "liquidity"]
-	},
-	{
-		"question": "What is TGE unlock and vesting duration?",
-		"answer": "TGE unlock is percentage claimable immediately at token generation event. Remaining allocation unlocks gradually over vesting duration if vesting is enabled.",
-		"tags": ["vesting", "tge", "presale", "creator", "investor"]
-	},
-	{
-		"question": "Should I enable vesting for my launch?",
-		"answer": "Enable vesting when you want gradual release instead of full instant unlock. This can reduce immediate sell pressure after launch.",
-		"tags": ["vesting", "creator", "tokenomics", "presale"]
-	},
-	{
-		"question": "Project info best practices for presale listing",
-		"answer": "Use clear logo, complete description, and verified social links (website, X, Telegram, GitHub, Discord, whitepaper). Complete profile improves investor trust and conversion.",
-		"tags": ["presale", "creator", "marketing", "listing"]
-	},
-	{
-		"question": "Which project info fields are optional?",
-		"answer": "Most info fields are optional, but complete project profile is strongly recommended for better trust and contribution performance.",
-		"tags": ["presale", "creator", "listing", "marketing"]
-	},
-	{
-		"question": "How to create presale step by step",
-		"answer": "Open https://www.moonsale.app/create, connect wallet, detect token, pass eligibility scan, configure rates/caps/buy limits/liquidity/time, set vesting if needed, complete project info, then deploy and pay listing fee.",
-		"tags": ["presale", "creator", "create", "how_it_works"]
-	},
-	{
-		"question": "How to create fair launch step by step",
-		"answer": "Open https://www.moonsale.app/create-fair-launch, connect wallet, configure token pool and softcap plus limits/timeline/liquidity, deploy contract, then complete listing fee to publish.",
-		"tags": ["fair_launch", "creator", "create", "how_it_works"]
-	},
-	{
-		"question": "How to create token step by step",
-		"answer": "Open https://www.moonsale.app/create-token, set name/symbol/supply/decimals and controls, deploy token contract, then use token in presale or fair launch creation flow.",
-		"tags": ["token_create", "creator", "create", "how_it_works"]
-	},
-	{
-		"question": "hwo to create token",
-		"answer": "Create token at https://www.moonsale.app/create-token, then create presale at https://www.moonsale.app/create if you want to launch immediately.",
-		"tags": ["token_create", "creator", "create", "typo"]
-	},
-	{
-		"question": "how do i create fairlaunch",
-		"answer": "Use https://www.moonsale.app/create-fair-launch. Configure token pool, softcap, liquidity, timeline, deploy, then complete listing fee.",
-		"tags": ["fair_launch", "creator", "create"]
-	},
-	{
-		"question": "presale kaise create karu",
-		"answer": "Presale banane ke liye https://www.moonsale.app/create open karo, wallet connect karo, token detect karo, config set karo, vesting/info complete karo, phir deploy karo.",
-		"tags": ["presale", "creator", "create", "hinglish"]
-	},
-	{
-		"question": "fairlaunch kaise banau",
-		"answer": "Fair launch banane ke liye https://www.moonsale.app/create-fair-launch use karo. Token pool aur softcap set karo, deploy karo, listing fee complete karo.",
-		"tags": ["fair_launch", "creator", "hinglish", "create"]
-	},
-	{
-		"question": "token kaise banau",
-		"answer": "Token banane ke liye https://www.moonsale.app/create-token use karo. Name, symbol, supply set karo aur deploy karo.",
-		"tags": ["token_create", "creator", "hinglish", "create"]
-	},
-	{
-		"question": "gimana bikin token di moonsale",
-		"answer": "Buka https://www.moonsale.app/create-token, isi nama/simbol/supply token, deploy contract, lalu lanjut create presale kalau perlu.",
-		"tags": ["token_create", "creator", "indo", "create"]
-	},
-	{
-		"question": "cara buat fair launch di moonsale",
-		"answer": "Pakai https://www.moonsale.app/create-fair-launch, atur token pool dan softcap, deploy, lalu bayar listing fee supaya listing tampil publik.",
-		"tags": ["fair_launch", "creator", "indo", "create"]
-	},
-	{
-		"question": "what is atomic deploy in presale",
-		"answer": "Atomic deploy means approval + sale contract deployment + token pull are executed in a controlled deployment flow so setup is consistent and less error-prone.",
-		"tags": ["presale", "creator", "deploy", "atomic"]
-	},
-	{
-		"question": "what causes deploy failure during presale creation",
-		"answer": "Common causes: wallet rejected one of required confirmations, wrong chain selected, insufficient gas, token approval not completed, or invalid config outside platform limits.",
-		"tags": ["presale", "deploy", "troubleshoot", "creator"]
-	},
-	{
-		"question": "what should i check before pressing deploy presale",
-		"answer": "Confirm token balance, rates, caps, min/max buy, liquidity and lock settings, sale timeline, vesting config, and project info links. Then ensure enough native token for gas and listing fee.",
-		"tags": ["presale", "creator", "deploy", "checklist"]
-	}
+[
+  {
+    "question": "Could not extract presale address from receipt",
+    "answer": "This usually means deploy receipt parsing failed. Verify both wallet confirmations were completed, wait for final confirmation on-chain, check explorer logs for presale creation event, refresh My Launches, and retry. If still failing, share tx hash, token address, and wallet with support.",
+    "tags": ["presale", "deploy", "troubleshoot", "receipt", "creator"]
+  },
+  {
+    "question": "How many confirmations are required when deploying a presale",
+    "answer": "Two confirmations are required. First you approve token transfer. Second the factory deploys the presale and pulls the required token amount.",
+    "tags": ["presale", "deploy", "creator", "atomic"]
+  },
+  {
+    "question": "what causes deploy failure during presale creation",
+    "answer": "Common causes are wrong chain, insufficient gas, rejected wallet confirmation, incomplete token approval, or invalid config outside platform limits.",
+    "tags": ["presale", "deploy", "troubleshoot", "creator"]
+  },
+  {
+    "question": "what should i check before pressing deploy presale",
+    "answer": "Confirm token balance, rates, caps, min/max buy, liquidity and lock settings, timeline, vesting config, and project links. Keep enough native token for gas and listing fee.",
+    "tags": ["presale", "creator", "deploy", "checklist"]
+  },
+  {
+    "question": "wen launch bro",
+    "answer": "Check exact start time and timezone on the sale countdown. If time passed and buy is still locked, verify chain, whitelist rules, and sale status.",
+    "tags": ["status", "presale", "investor", "support"]
+  },
+  {
+    "question": "how do i buy into dis presale",
+    "answer": "Open the sale page, connect wallet on the correct chain, enter an amount within min/max limits, then confirm transaction. Claim after successful finalization.",
+    "tags": ["presale", "contribution", "investor", "how_it_works"]
+  },
+  {
+    "question": "i conected my wallet but cant see the buy buton",
+    "answer": "If Buy is missing, check correct network, Live status, whitelist requirement, and wallet eligibility. Refresh and reconnect wallet if needed.",
+    "tags": ["wallet", "support", "presale", "contribution"]
+  },
+  {
+    "question": "is this legit or another rug",
+    "answer": "MoonSale has contract-level protections like refund and lock logic, but project-level risk still exists. Always review team credibility, token distribution, lock terms, and community quality before investing.",
+    "tags": ["security", "risk", "investor", "liquidity"]
+  },
+  {
+    "question": "which chain dis on eth or bnb",
+    "answer": "MoonSale supports BNB Chain and Ethereum. Each sale runs on one chain, shown on the sale page.",
+    "tags": ["chains", "bnb", "ethereum", "investor"]
+  },
+  {
+    "question": "do i need bnb or eth to participte",
+    "answer": "Use native coin of the sale chain: BNB for BNB Chain sales and ETH for Ethereum sales.",
+    "tags": ["bnb", "ethereum", "contribution", "investor"]
+  },
+  {
+    "question": "bro how much minimum i can invest",
+    "answer": "Minimum contribution is set per sale and enforced on-chain. Check the sale panel for exact min buy.",
+    "tags": ["contribution", "investor", "presale", "fair_launch"]
+  },
+  {
+    "question": "wats the max i can put in one presale",
+    "answer": "Maximum contribution is set per sale. Your wallet cannot exceed that configured max amount.",
+    "tags": ["contribution", "investor", "presale", "fair_launch"]
+  },
+  {
+    "question": "i sent bnb but tokens didnt come yet",
+    "answer": "Contributed funds are recorded first. Tokens become claimable only after successful finalization and according to vesting terms.",
+    "tags": ["contribution", "claim", "investor", "vesting"]
+  },
+  {
+    "question": "bro i clicked buy and metamask showed error wht do i do",
+    "answer": "Check correct chain, available gas, and min/max limits. Retry transaction and inspect explorer error reason. If still failing, share tx hash with support.",
+    "tags": ["metamask", "wallet", "support", "contribution"]
+  },
+  {
+    "question": "can i invest 2 times in same presale or only once",
+    "answer": "Usually yes, multiple contributions are allowed while sale is Live, as long as your total stays within max limit.",
+    "tags": ["contribution", "investor", "presale"]
+  },
+  {
+    "question": "how do i kno how many tokens ill get before buying",
+    "answer": "Use the contribution estimate on the sale page. In fixed-rate presales it is stable by rate; in fair launch it is an estimate that can change until finalization.",
+    "tags": ["contribution", "investor", "presale", "fair_launch", "price_discovery"]
+  },
+  {
+    "question": "wen can i claim my tokens",
+    "answer": "Claim opens after successful finalization. If vesting exists, only currently unlocked portion is claimable.",
+    "tags": ["claim", "finalize", "investor", "vesting"]
+  },
+  {
+    "question": "sale ended 2 hrs ago still no claim button",
+    "answer": "Claim appears only after finalize action is completed. If not finalized yet, claim stays unavailable.",
+    "tags": ["claim", "finalize", "status", "investor"]
+  },
+  {
+    "question": "do i need to do anythng or tokens come automaticly",
+    "answer": "You usually need to click Claim from the sale page. Tokens are not automatically sent in most sale flows.",
+    "tags": ["claim", "investor", "presale", "fair_launch"]
+  },
+  {
+    "question": "i claimed but tokens not in my wallet",
+    "answer": "Verify claim tx success, correct chain, and token contract import in your wallet. Also make sure you are using the same contribution wallet.",
+    "tags": ["claim", "wallet", "metamask", "support"]
+  },
+  {
+    "question": "where do i add the token to my metamask after claim",
+    "answer": "In MetaMask use Import Tokens and paste the token contract address from the official sale page.",
+    "tags": ["metamask", "claim", "wallet", "support"]
+  },
+  {
+    "question": "project finalized but i still cant claim",
+    "answer": "Refresh page, reconnect same wallet, confirm correct network, and check vesting/cliff settings. If still blocked, contact admin with sale link and wallet address.",
+    "tags": ["claim", "finalize", "vesting", "support"]
+  },
+  {
+    "question": "softcap not reached wen do i get my money back",
+    "answer": "If softcap is not reached, sale fails and refund is available via smart contract on the sale page.",
+    "tags": ["softcap", "refund", "investor", "presale", "fair_launch"]
+  },
+  {
+    "question": "how do i get refund if project fails",
+    "answer": "Open the failed or cancelled sale page and click Refund using the same wallet that contributed.",
+    "tags": ["refund", "investor", "support", "presale", "fair_launch"]
+  },
+  {
+    "question": "bro i want out before sale ends can i withdraw",
+    "answer": "If early withdrawal is enabled, you can exit during Live phase, usually with a penalty.",
+    "tags": ["withdraw", "penalty", "investor", "presale", "fair_launch"]
+  },
+  {
+    "question": "if i withdraw early do i lose all my bnb or just some",
+    "answer": "Early withdrawal usually applies a penalty, not total loss. Exact amount depends on sale rules.",
+    "tags": ["withdraw", "penalty", "refund", "investor"]
+  },
+  {
+    "question": "sale got cancled by dev will i get full refund",
+    "answer": "If sale is cancelled and refund is enabled by contract conditions, contributors can refund from the sale page.",
+    "tags": ["cancel", "refund", "investor", "presale", "fair_launch"]
+  },
+  {
+    "question": "is refund automatic or do i have to click something",
+    "answer": "You usually need to click Refund. Eligibility is on-chain, but claiming refund still requires wallet transaction.",
+    "tags": ["refund", "investor", "how_it_works"]
+  },
+  {
+    "question": "wats vesting mean in simple words",
+    "answer": "Vesting means your tokens unlock gradually over time instead of all at once.",
+    "tags": ["vesting", "investor", "tokens"]
+  },
+  {
+    "question": "i got 20 percent on tge wen do i get the rest",
+    "answer": "Remaining tokens unlock according to cliff and vesting duration configured for that sale.",
+    "tags": ["tge", "vesting", "claim", "investor"]
+  },
+  {
+    "question": "bro cliff means what exactly",
+    "answer": "Cliff is the waiting period before additional vesting unlocks begin.",
+    "tags": ["cliff", "vesting", "investor"]
+  },
+  {
+    "question": "how do i check if lp is actually locked",
+    "answer": "Use official lock references from the sale and verify lock contract data on chain.",
+    "tags": ["liquidity", "lp", "lock", "security", "investor"]
+  },
+  {
+    "question": "team tokens locked or not how do i verify",
+    "answer": "Check team allocation lock or vesting contract addresses provided by project and verify on explorer.",
+    "tags": ["lock", "vesting", "security", "investor"]
+  },
+  {
+    "question": "vesting schedule can dev cancel it or not",
+    "answer": "That depends on vesting contract design. Review contract behavior and sale terms before investing.",
+    "tags": ["vesting", "security", "investor", "contracts"]
+  },
+  {
+    "question": "is moonsale safe or can devs rug anytime",
+    "answer": "MoonSale has audited contracts and investor safeguards, but project risk remains. Always do your own research before investing.",
+    "tags": ["security", "safe", "risk", "investor"]
+  },
+  {
+    "question": "how is dis diffrent from pinksale",
+    "answer": "Use official docs to compare launch flow, fees, refund behavior, and lock rules. I can provide verified MoonSale details for side-by-side checks.",
+    "tags": ["comparison", "general", "investor"]
+  },
+  {
+    "question": "bro the dev dmd me saying send bnb for whitelist is that real",
+    "answer": "Do not send funds through DMs. Only contribute via official MoonSale sale pages.",
+    "tags": ["security", "whitelist", "risk", "investor"]
+  },
+  {
+    "question": "kyc badge means dev is doxxed",
+    "answer": "KYC badge indicates identity verification was completed under platform process. It does not remove all risk.",
+    "tags": ["kyc", "badge", "security", "investor"]
+  },
+  {
+    "question": "audit badge means contract is safe",
+    "answer": "Audit badge is a positive signal, not a guarantee. Market and team risks can still exist.",
+    "tags": ["audit", "badge", "security", "risk"]
+  },
+  {
+    "question": "can moonsale team steal my funds",
+    "answer": "Sale and refund logic are contract-enforced on chain, not manual admin custody.",
+    "tags": ["security", "contracts", "refund", "investor"]
+  },
+  {
+    "question": "no kyc on this project shud i still invest",
+    "answer": "No KYC means higher uncertainty. Review risk factors carefully and only invest what you can afford to lose.",
+    "tags": ["kyc", "risk", "security", "investor"]
+  },
+  {
+    "question": "who audited moonsale itself",
+    "answer": "MoonSale states its core contracts were independently audited before mainnet deployment. Use official docs for current audit references.",
+    "tags": ["audit", "security", "contracts", "general"]
+  },
+  {
+    "question": "wrong network showing wht do i do",
+    "answer": "Switch wallet to the chain used by the sale, then refresh and reconnect.",
+    "tags": ["wallet", "chains", "support", "metamask"]
+  },
+  {
+    "question": "i approved but 2nd txn failed now what",
+    "answer": "Approval can succeed while buy fails due to gas, limits, or wrong chain. Recheck settings and retry.",
+    "tags": ["metamask", "wallet", "support", "contribution"]
+  },
+  {
+    "question": "gas fee too high any way to reduce",
+    "answer": "Wait for lower congestion or tune gas settings carefully. Very low gas can cause failure or long pending transactions.",
+    "tags": ["wallet", "support", "contribution"]
+  },
+  {
+    "question": "bro transaction pending for 20min is it stuck",
+    "answer": "Pending often means congestion or low gas. Check explorer and use speed-up or cancel in wallet if available.",
+    "tags": ["wallet", "metamask", "support", "contribution"]
+  },
+  {
+    "question": "i used wrong wallet address can i fix it",
+    "answer": "On-chain contribution ownership cannot be reassigned by support. Actions must come from original wallet.",
+    "tags": ["wallet", "security", "support", "investor"]
+  },
+  {
+    "question": "metamask keeps rejecting the txn idk why",
+    "answer": "Check chain, gas balance, pending queue, and contribution limits. Retry after fixing those conditions.",
+    "tags": ["metamask", "wallet", "support", "contribution"]
+  },
+  {
+    "question": "wats fair launch mean vs normal presale",
+    "answer": "Presale has fixed token rate and hardcap. Fair launch uses dynamic price discovery from total raised and token pool.",
+    "tags": ["fair_launch", "presale", "price_discovery", "investor"]
+  },
+  {
+    "question": "price keeps changing on fair launch is that normal",
+    "answer": "Yes. Fair launch estimates can change until finalization as total raised changes.",
+    "tags": ["fair_launch", "price_discovery", "investor"]
+  },
+  {
+    "question": "if more ppl join does my token amount go down",
+    "answer": "In fair launch your share is proportional. If total raised grows and you do not add more, your percentage share decreases.",
+    "tags": ["fair_launch", "price_discovery", "investor"]
+  },
+  {
+    "question": "wen is final price decided",
+    "answer": "Final fair launch price is set at finalization using total raised and token pool.",
+    "tags": ["fair_launch", "finalize", "price_discovery", "investor"]
+  },
+  {
+    "question": "bro i joined fair launch early will i get better price or same as everyone",
+    "answer": "In standard fair launch, contributors settle with the same final pricing formula. Early entry does not guarantee a separate fixed tier.",
+    "tags": ["fair_launch", "price_discovery", "investor"]
+  },
+  {
+    "question": "how do i kno if im whitelisted",
+    "answer": "Whitelist status is checked by contract when you contribute. Non-approved wallets are rejected in whitelist-only sales.",
+    "tags": ["whitelist", "investor", "presale", "fair_launch"]
+  },
+  {
+    "question": "im not on whitelist can i still buy",
+    "answer": "Only if sale is public. In whitelist-only mode, non-whitelisted wallets cannot buy.",
+    "tags": ["whitelist", "investor", "presale", "fair_launch"]
+  },
+  {
+    "question": "whitelist full can i still apply",
+    "answer": "Whitelist changes are controlled by project team. Ask official project channels for updates.",
+    "tags": ["whitelist", "support", "investor"]
+  },
+  {
+    "question": "dev said whitelist open how do i join",
+    "answer": "Follow official project channels and never send funds to private wallets for whitelist access.",
+    "tags": ["whitelist", "security", "support", "investor"]
+  },
+  {
+    "question": "i got whitelisted but sale starts wen",
+    "answer": "Check the sale countdown for exact start time and timezone.",
+    "tags": ["whitelist", "status", "investor"]
+  },
+  {
+    "question": "ok so i connect wallet then what",
+    "answer": "Open a Live sale, review limits and tokenomics, enter amount, confirm tx, and claim after finalization.",
+    "tags": ["investor", "wallet", "presale", "fair_launch", "how_it_works"]
+  },
+  {
+    "question": "where do i even find presales on this site",
+    "answer": "Browse launches at https://www.moonsale.app/presale",
+    "tags": ["presale", "browse", "investor"]
+  },
+  {
+    "question": "do i need to make an account or just wallet",
+    "answer": "Wallet connection is usually enough for on-chain participation.",
+    "tags": ["wallet", "investor", "how_it_works"]
+  },
+  {
+    "question": "is moonsale an exchange or what exactly",
+    "answer": "MoonSale is a launchpad for presales and fair launches, plus tools like lock, vesting, scanner, and token generator.",
+    "tags": ["general", "how_it_works", "presale", "fair_launch"]
+  },
+  {
+    "question": "where do i see all my investments in one place",
+    "answer": "Use My Contributions or invested views to track joined sales, claim state, and refund status.",
+    "tags": ["portfolio", "investor", "support", "contribution"]
+  },
+  {
+    "question": "can i use moonsale on my phone",
+    "answer": "Yes, MoonSale can be used on mobile with compatible wallet browser or WalletConnect flow.",
+    "tags": ["wallet", "support", "investor"]
+  },
+  {
+    "question": "bro can u send me step by step how to invest",
+    "answer": "1) Open sale page. 2) Connect wallet on correct chain. 3) Enter amount within limits. 4) Confirm tx. 5) Claim after finalization.",
+    "tags": ["investor", "how_it_works", "presale", "fair_launch"]
+  },
+  {
+    "question": "i dont hav metamask can i use trust wallet",
+    "answer": "Yes. Trust Wallet and other compatible wallets can work if they support required chain and dApp connection.",
+    "tags": ["wallet", "walletconnect", "support", "investor"]
+  },
+  {
+    "question": "can i use coinbase wallet",
+    "answer": "If it supports required chain and connection flow, yes.",
+    "tags": ["wallet", "support", "investor"]
+  },
+  {
+    "question": "can i use hardware wallet like ledger",
+    "answer": "Yes, when connected through a supported wallet interface.",
+    "tags": ["wallet", "support", "investor"]
+  },
+  {
+    "question": "can i contribute from exchange wallet like binance directly",
+    "answer": "Not recommended. Use a self-custody wallet you control for contributions and claims.",
+    "tags": ["wallet", "security", "investor", "support"]
+  },
+  {
+    "question": "i changed wallet mid presale will my old contribution be lost",
+    "answer": "Contribution remains tied to original wallet. Claim and refund must be done from that wallet.",
+    "tags": ["wallet", "claim", "refund", "investor"]
+  },
+  {
+    "question": "bro price in presale is different from price after listing why",
+    "answer": "Presale and listing prices can differ based on launch setup and liquidity configuration.",
+    "tags": ["presale", "liquidity", "tokenomics", "investor"]
+  },
+  {
+    "question": "my estimated tokens keep changing on fair launch is that a bug",
+    "answer": "Usually not a bug. Fair launch estimates update with changing total raised before finalization.",
+    "tags": ["fair_launch", "price_discovery", "investor", "support"]
+  },
+  {
+    "question": "hardcap reached in 2 min i didnt get in is there another chance",
+    "answer": "If hardcap is filled, further buys are blocked. Track upcoming launches for next opportunity.",
+    "tags": ["hardcap", "status", "presale", "investor"]
+  },
+  {
+    "question": "bro i have usdt can i use that or only bnb eth",
+    "answer": "Contribution asset depends on sale design. Most native-chain launches use BNB on BNB Chain or ETH on Ethereum.",
+    "tags": ["contribution", "bnb", "ethereum", "investor"]
+  },
+  {
+    "question": "if i lose access to my wallet do i lose vested tokens forever",
+    "answer": "Yes. On-chain claims require the original wallet access. Keep seed phrase and keys secure.",
+    "tags": ["wallet", "vesting", "security", "investor"]
+  },
+  {
+    "question": "vesting says claimable 0 but cliff should be done by now",
+    "answer": "Verify vesting start, cliff end, and claim interval on-chain. If timing passed and still zero, contact support with vesting contract link.",
+    "tags": ["vesting", "cliff", "claim", "support", "investor"]
+  },
+  {
+    "question": "how often can i claim during vesting period like daily or only once",
+    "answer": "Claim cadence depends on vesting schedule. Some are continuous-linear, others interval-based.",
+    "tags": ["vesting", "claim", "investor"]
+  },
+  {
+    "question": "dev hasnt finalized its been 2 days since sale ended should i be worried",
+    "answer": "Finalization must happen for claim flow to open. If delayed, contact project/admin support and keep transaction records.",
+    "tags": ["finalize", "status", "claim", "support", "investor"]
+  },
+  {
+    "question": "sale finalized but claim button still not showing its been 3 hours",
+    "answer": "Recheck wallet and chain, refresh page, then verify vesting conditions. If still missing, contact admin with sale link and wallet.",
+    "tags": ["claim", "finalize", "support", "wallet"]
+  },
+  {
+    "question": "sale failed but refund button not showing",
+    "answer": "Use exact contribution wallet on correct chain. If still hidden, send sale link and wallet to admin support.",
+    "tags": ["refund", "support", "wallet", "investor"]
+  },
+  {
+    "question": "i got partial refund where did rest go",
+    "answer": "Partial return can happen with early-withdraw penalties or mixed transaction states. Verify each tx on explorer.",
+    "tags": ["refund", "withdraw", "penalty", "investor", "support"]
+  },
+  {
+    "question": "failed sale refund has deadline or can i claim anytime",
+    "answer": "MoonSale documentation states no refund deadline for failed or cancelled sales.",
+    "tags": ["refund", "softcap", "investor", "support"]
+  },
+  {
+    "question": "if i contributed in 3 separate transactions do i refund all at once",
+    "answer": "Refund is contract-calculated for your eligible contribution balance from that wallet.",
+    "tags": ["refund", "contribution", "investor", "contracts"]
+  },
+  {
+    "question": "whitelisted on bsc but want to contribute on eth is that possible",
+    "answer": "No. Whitelist and contribution are sale and chain specific. BSC and ETH launches are separate contracts.",
+    "tags": ["whitelist", "chains", "bnb", "ethereum", "investor"]
+  },
+  {
+    "question": "fair launch has no hardcap so it can go forever",
+    "answer": "No. Fair launch has defined start/end time even without hardcap.",
+    "tags": ["fair_launch", "hardcap", "status", "investor"]
+  },
+  {
+    "question": "is there slippage in fair launch like on dex",
+    "answer": "Fair launch uses sale allocation math, not regular DEX swap slippage during contribution.",
+    "tags": ["fair_launch", "price_discovery", "investor"]
+  },
+  {
+    "question": "can dev cancel fair launch after it starts",
+    "answer": "Cancellation behavior depends on contract conditions and current sale state.",
+    "tags": ["fair_launch", "cancel", "contracts", "investor"]
+  },
+  {
+    "question": "difference between kyc badge and audit badge",
+    "answer": "KYC verifies identity. Audit reviews smart-contract code and findings. They serve different trust purposes.",
+    "tags": ["kyc", "audit", "badge", "security"]
+  },
+  {
+    "question": "whats the moonsale buybot do exactly",
+    "answer": "MoonSale BuyBot posts real-time buy updates in Telegram for supported tokens.",
+    "tags": ["buybot", "telegram", "tools", "general"]
+  },
+  {
+    "question": "how do i add buybot to my telegram group",
+    "answer": "Use official MoonSale BuyBot instructions and grant required Telegram bot permissions in your group.",
+    "tags": ["buybot", "telegram", "support", "tools"]
+  },
+  {
+    "question": "token scanner says honeypot but others say its fine which to trust",
+    "answer": "Treat scanner warnings seriously and cross-check owner permissions, transfer behavior, and other independent audits/tools.",
+    "tags": ["scanner", "security", "risk", "investor"]
+  },
+  {
+    "question": "tokenomics creator is free or paid",
+    "answer": "Check current pricing on the official tokenomics creator page because tool pricing may change.",
+    "tags": ["tokenomics", "tools", "fees", "support"]
+  },
+  {
+    "question": "can i use token generator without launching presale",
+    "answer": "Yes. Token generator can be used independently. Launching a presale is optional.",
+    "tags": ["token_create", "tools", "creator"]
+  },
+  {
+    "question": "how do i lock lp tokens that i already have",
+    "answer": "Open lock tool, choose LP token, set lock amount and duration, then confirm transaction.",
+    "tags": ["lock", "lp", "tools", "liquidity", "creator"]
+  },
+  {
+    "question": "token management page shows nothing why",
+    "answer": "Connect the wallet with ownership/permissions and ensure correct chain selection.",
+    "tags": ["token_management", "wallet", "support", "creator"]
+  },
+  {
+    "question": "bro i created token but made mistake in supply can i redeploy",
+    "answer": "Token parameters are usually immutable after deployment. In many cases you need to deploy a new token contract.",
+    "tags": ["token_create", "contracts", "creator", "support"]
+  },
+  {
+    "question": "platform takes percent of raised funds how much exactly",
+    "answer": "MoonSale has documented platform fee model. Check official fees page for latest exact values.",
+    "tags": ["fees", "listing_fee", "revenue", "creator"]
+  },
+  {
+    "question": "listing fee is per chain or same everywhere",
+    "answer": "Fee policy can vary by chain/product. Verify exact current values on official fees page.",
+    "tags": ["fees", "listing_fee", "chains", "creator"]
+  },
+  {
+    "question": "bro i paid listing fee but presale still not showing publicly",
+    "answer": "Check listing-fee transaction confirmation and allow indexing refresh. If still hidden, contact support with sale link and tx hash.",
+    "tags": ["listing_fee", "status", "support", "creator"]
+  },
+  {
+    "question": "if presale fails do i get listing fee back",
+    "answer": "Listing-fee refund depends on current platform policy. Check official docs for latest terms.",
+    "tags": ["fees", "listing_fee", "creator", "support"]
+  },
+  {
+    "question": "how do i pay listing fee where exactly on site",
+    "answer": "After deployment, use listing-fee step in your launch flow or My Launches panel.",
+    "tags": ["listing_fee", "creator", "presale", "fair_launch", "how_it_works"]
+  },
+  {
+    "question": "bro total fees to launch a presale roughly how much in bnb",
+    "answer": "Total cost equals listing fee plus gas and optional tool fees. Check official fees page for current amounts.",
+    "tags": ["fees", "listing_fee", "creator", "bnb"]
+  },
+  {
+    "question": "wen moon",
+    "answer": "No one can guarantee profit timing. Focus on verified fundamentals like tokenomics, locks, vesting, and team quality.",
+    "tags": ["risk", "investor", "general"]
+  },
+  {
+    "question": "i cant read all this just tell me buy or no buy",
+    "answer": "I cannot provide financial advice. I can help you quickly evaluate risk signals so you can decide.",
+    "tags": ["risk", "security", "investor", "general"]
+  },
+  {
+    "question": "anon dev instant red flag or nah",
+    "answer": "Anonymous teams increase uncertainty. Treat as higher risk unless strong verifiable trust signals exist.",
+    "tags": ["risk", "security", "investor", "kyc"]
+  },
+  {
+    "question": "someone in tg said moonsale is hacked is that true",
+    "answer": "Ignore unverified rumors. Trust only official MoonSale announcements and status updates.",
+    "tags": ["security", "support", "general"]
+  },
+  {
+    "question": "can i extend liquidity lock now my presale is running and in live mode",
+    "answer": "Once a presale or fair launch contract is deployed and Live, liquidity lock cannot be extended during live mode. Extend only after finalization.",
+    "tags": ["liquidity", "lock", "presale", "fair_launch", "creator"]
+  },
+  {
+    "question": "can i extend liquidity lock during active fair launch",
+    "answer": "No. During active live mode lock extension is not available. Finalize first, then adjust lock if supported.",
+    "tags": ["liquidity", "lock", "fair_launch", "creator"]
+  },
+  {
+    "question": "its past start time but i cant buy yet why",
+    "answer": "Check whitelist mode, chain mismatch, and whether publish/final setup steps are completed.",
+    "tags": ["status", "whitelist", "wallet", "investor"]
+  },
+  {
+    "question": "sale supposed to end today but still showing live",
+    "answer": "Confirm timezone/block-time interpretation. UI cache can temporarily lag status updates.",
+    "tags": ["status", "support", "investor", "presale", "fair_launch"]
+  },
+  {
+    "question": "wen does my next vesting unlock happen",
+    "answer": "Next unlock is determined by vesting start, cliff, and interval schedule in contract.",
+    "tags": ["vesting", "claim", "cliff", "investor"]
+  },
+  {
+    "question": "help my bnb is gone and no tokens",
+    "answer": "Verify tx hash and contribution record on sale page. Contributions do not instantly appear as tokens before finalization. If mismatch remains, contact admin with wallet and tx hash.",
+    "tags": ["contribution", "claim", "support", "investor"]
+  },
+  {
+    "question": "if you do not know the answer what should happen",
+    "answer": "If no verified answer is available, ask user to wait for admin support reply and share official docs links as temporary guidance.",
+    "tags": ["support", "general"]
+  }
 ]
