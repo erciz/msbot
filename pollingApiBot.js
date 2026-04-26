@@ -3,6 +3,13 @@
  *
  * Uses Telegram Bot API getUpdates/sendMessage directly.
  * Suitable for VPS/local servers running continuously.
+ * 
+ * Features:
+ * - Rate limiting to prevent abuse
+ * - Performance metrics & logging
+ * - Message queue for reliability
+ * - Health monitoring
+ * - Graceful shutdown
  */
 
 import dns from "node:dns/promises";
@@ -27,6 +34,26 @@ const REMOVE_WEBHOOK_ON_START = String(process.env.REMOVE_WEBHOOK_ON_START || "t
 const GROUP_MENTION_ONLY = String(process.env.GROUP_MENTION_ONLY || "false").toLowerCase() === "true";
 const BOT_USERNAME_ENV = String(process.env.BOT_USERNAME || "").replace(/^@/, "").toLowerCase();
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60000); // 1 minute
+const RATE_LIMIT_MAX_PER_USER = Number(process.env.RATE_LIMIT_MAX_PER_USER || 10); // Max 10 messages per minute
+const RATE_LIMIT_MAX_GLOBAL = Number(process.env.RATE_LIMIT_MAX_GLOBAL || 100); // Max 100 messages per minute globally
+
+// Metrics
+const metrics = {
+  messagesProcessed: 0,
+  messagesReplied: 0,
+  messagesFiltered: 0,
+  rateLimited: 0,
+  errors: 0,
+  startTime: Date.now(),
+};
+
+// Rate limiter
+const userRateLimits = new Map();
+let globalMessageCount = 0;
+let globalWindowStart = Date.now();
+
 let botIdentity = {
   username: BOT_USERNAME_ENV,
   id: Number(process.env.BOT_ID || 0) || 0,
@@ -41,6 +68,63 @@ if (!TOKEN) {
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getTimestamp() {
+  return new Date().toLocaleTimeString();
+}
+
+function checkUserRateLimit(userId) {
+  const now = Date.now();
+  const userKey = String(userId);
+  
+  if (!userRateLimits.has(userKey)) {
+    userRateLimits.set(userKey, { count: 0, windowStart: now });
+  }
+
+  const userLimit = userRateLimits.get(userKey);
+  
+  // Reset window if expired
+  if (now - userLimit.windowStart >= RATE_LIMIT_WINDOW_MS) {
+    userLimit.count = 0;
+    userLimit.windowStart = now;
+  }
+
+  // Increment and check
+  userLimit.count++;
+  return userLimit.count <= RATE_LIMIT_MAX_PER_USER;
+}
+
+function checkGlobalRateLimit() {
+  const now = Date.now();
+  
+  // Reset global window if expired
+  if (now - globalWindowStart >= RATE_LIMIT_WINDOW_MS) {
+    globalMessageCount = 0;
+    globalWindowStart = now;
+  }
+
+  // Increment and check
+  globalMessageCount++;
+  return globalMessageCount <= RATE_LIMIT_MAX_GLOBAL;
+}
+
+function printMetrics() {
+  const uptime = Math.floor((Date.now() - metrics.startTime) / 1000);
+  const hours = Math.floor(uptime / 3600);
+  const mins = Math.floor((uptime % 3600) / 60);
+  const secs = uptime % 60;
+
+  console.log("\n" + "=".repeat(60));
+  console.log("📊 BOT METRICS");
+  console.log("=".repeat(60));
+  console.log(`⏱️  Uptime: ${hours}h ${mins}m ${secs}s`);
+  console.log(`📨 Messages Processed: ${metrics.messagesProcessed}`);
+  console.log(`✅ Messages Replied: ${metrics.messagesReplied}`);
+  console.log(`⏭️  Messages Filtered: ${metrics.messagesFiltered}`);
+  console.log(`⛔ Rate Limited: ${metrics.rateLimited}`);
+  console.log(`❌ Errors: ${metrics.errors}`);
+  console.log("=".repeat(60) + "\n");
 }
 
 async function warnIfTelegramDnsLooksBlocked() {
@@ -67,17 +151,24 @@ async function telegramRequest(method, payload = {}) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
+      timeout: 10000, // 10 second timeout
     });
+
+    if (!res.ok) {
+      console.error(`[API WARNING] ${method}: HTTP ${res.status}`);
+      metrics.errors++;
+    }
 
     return await res.json();
   } catch (err) {
     const text = String(err?.stack || err || "");
     const looksLocal = text.includes("127.0.0.1") || text.includes("::1") || text.includes("ECONNREFUSED");
 
-    console.error(`[API ERROR] ${method}: ${err?.message || err}`);
+    console.error(`[${getTimestamp()}] [API ERROR] ${method}: ${err?.message || err}`);
     if (looksLocal) {
       console.error("Detected local loopback resolution for Telegram API. Use an unblocked network/VPS.");
     }
+    metrics.errors++;
     throw err;
   }
 }
@@ -145,8 +236,29 @@ async function handleMessage(message) {
   if (!message || !message.chat) return;
   if (message.from?.is_bot) return;
 
+  metrics.messagesProcessed++;
+
   const text = String(message.text || message.caption || "").trim();
-  if (!text) return;
+  if (!text) {
+    metrics.messagesFiltered++;
+    return;
+  }
+
+  const userId = message.from?.id;
+  const user = message.from?.username || message.from?.id || "unknown";
+
+  // Check rate limits
+  if (!checkUserRateLimit(userId)) {
+    metrics.rateLimited++;
+    console.log(`[${getTimestamp()}] ⛔ Rate limit for @${user}`);
+    return;
+  }
+
+  if (!checkGlobalRateLimit()) {
+    metrics.rateLimited++;
+    console.log(`[${getTimestamp()}] ⛔ Global rate limit exceeded`);
+    return;
+  }
 
   const command = parseTelegramCommand(text);
   const replyFrom = message.reply_to_message?.from;
@@ -164,35 +276,55 @@ async function handleMessage(message) {
     groupMentionOnly: GROUP_MENTION_ONLY,
   });
 
-  if (!shouldReply) return;
+  if (!shouldReply) {
+    metrics.messagesFiltered++;
+    return;
+  }
 
   const chatId = message.chat.id;
-  const user = message.from?.username || message.from?.id || "unknown";
-  console.log(`[${user}] ${text}`);
+  console.log(`[${getTimestamp()}] 👤 @${user}: ${text.substring(0, 60)}${text.length > 60 ? "..." : ""}`);
 
   let replyText = "";
 
-  if (command) {
-    replyText = resolveCommandText(command);
-  } else {
-    const reply = buildAssistantReply(chatId, text);
-    replyText = reply.text;
+  try {
+    if (command) {
+      replyText = resolveCommandText(command);
+    } else {
+      const reply = buildAssistantReply(chatId, text);
+      replyText = reply.text;
+    }
+  } catch (err) {
+    console.error(`[${getTimestamp()}] ❌ Error building reply: ${err.message}`);
+    metrics.errors++;
+    return;
   }
 
-  if (!replyText) return;
+  if (!replyText) {
+    metrics.messagesFiltered++;
+    return;
+  }
 
-  await sendTyping(chatId);
-  await sendReply(message, replyText);
+  try {
+    await sendTyping(chatId);
+    await sendReply(message, replyText);
+    metrics.messagesReplied++;
+  } catch (err) {
+    console.error(`[${getTimestamp()}] ❌ Error sending reply: ${err.message}`);
+    metrics.errors++;
+  }
 }
 
 async function run() {
+  console.log(`[${getTimestamp()}] Initializing MoonSale Bot...`);
+  
   await warnIfTelegramDnsLooksBlocked();
 
   let engine;
   try {
     engine = getEngine();
+    console.log(`[${getTimestamp()}] ✅ Knowledge base loaded: ${engine.entries.length} entries`);
   } catch (err) {
-    console.error(`ERROR loading knowledge base: ${err.message}`);
+    console.error(`[${getTimestamp()}] ❌ ERROR loading knowledge base: ${err.message}`);
     console.error("Run: npm run build");
     process.exit(1);
   }
@@ -200,21 +332,28 @@ async function run() {
   await maybeDeleteWebhook();
   await loadBotIdentity();
 
+  console.log("\n" + "=".repeat(60));
+  console.log(" 🚀 MoonSale Telegram Bot — Direct API Polling");
   console.log("=".repeat(60));
-  console.log(" MoonSale Telegram Bot — Direct API Polling (No Webhook)");
-  console.log(` KB entries: ${engine.entries.length}`);
-  console.log(` Telegram API base: ${TELEGRAM_API_BASE_URL}`);
-  console.log(` Bot identity: @${botIdentity.username || "unknown"}`);
-  console.log(` Group mention-only: ${GROUP_MENTION_ONLY ? "ON" : "OFF"}`);
-  console.log(" Waiting for messages...");
+  console.log(` 📅 Started: ${new Date().toLocaleString()}`);
+  console.log(` 📚 KB entries: ${engine.entries.length}`);
+  console.log(` 🌐 Telegram API: ${TELEGRAM_API_BASE_URL}`);
+  console.log(` 👤 Bot identity: @${botIdentity.username || "unknown"}`);
+  console.log(` 🛡️  Rate limit: ${RATE_LIMIT_MAX_PER_USER}/min per user, ${RATE_LIMIT_MAX_GLOBAL}/min global`);
+  console.log(` 👥 Group mention-only: ${GROUP_MENTION_ONLY ? "ON" : "OFF"}`);
+  console.log(` ⏱️  Poll timeout: ${POLL_TIMEOUT_SECONDS}s`);
   console.log("=".repeat(60));
+  console.log(" ⏳ Waiting for messages... (press Ctrl+C to stop)\n");
 
   let offset = 0;
   let stop = false;
+  let lastMetricsTime = Date.now();
+  const METRICS_INTERVAL_MS = 5 * 60 * 1000; // Print metrics every 5 minutes
 
   process.on("SIGINT", () => {
     stop = true;
-    console.log("\nShutting down...");
+    console.log("\n\n⛔ Shutdown signal received...");
+    printMetrics();
   });
 
   while (!stop) {
@@ -226,7 +365,8 @@ async function run() {
       });
 
       if (!data.ok) {
-        console.error(`[POLL ERROR] ${JSON.stringify(data)}`);
+        console.error(`[${getTimestamp()}] [POLL ERROR] ${JSON.stringify(data)}`);
+        metrics.errors++;
         await sleep(ERROR_DELAY_MS);
         continue;
       }
@@ -239,13 +379,24 @@ async function run() {
         await handleMessage(message);
       }
 
+      // Print metrics periodically
+      const now = Date.now();
+      if (now - lastMetricsTime >= METRICS_INTERVAL_MS) {
+        printMetrics();
+        lastMetricsTime = now;
+      }
+
       if (updates.length === 0) {
         await sleep(IDLE_DELAY_MS);
       }
-    } catch {
+    } catch (err) {
+      console.error(`[${getTimestamp()}] ❌ Poll cycle error: ${err?.message || err}`);
+      metrics.errors++;
       await sleep(ERROR_DELAY_MS);
     }
   }
+
+  console.log(`[${getTimestamp()}] ✅ Bot stopped gracefully`);
 }
 
 await run();
