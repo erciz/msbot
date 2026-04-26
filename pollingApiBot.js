@@ -22,6 +22,13 @@ import {
   resolveCommandText,
   shouldReplyToMessageByPolicy,
 } from "./assistantCore.js";
+import {
+  getReplyHintForUser,
+  isAiControlCommand,
+  isAiPausedForUser,
+  isPrivilegedTelegramUser,
+  runAiControlCommand,
+} from "./telegramUserControls.js";
 
 loadDotEnvFile();
 
@@ -247,6 +254,35 @@ async function handleMessage(message) {
   const userId = message.from?.id;
   const user = message.from?.username || message.from?.id || "unknown";
 
+  if (isPrivilegedTelegramUser(userId)) {
+    metrics.messagesFiltered++;
+    return;
+  }
+
+  const command = parseTelegramCommand(text);
+
+  if (isAiControlCommand(command)) {
+    try {
+      const replyText = await runAiControlCommand(command, userId);
+      if (replyText) {
+        await sendTyping(message.chat.id);
+        await sendReply(message, replyText);
+        metrics.messagesReplied++;
+      } else {
+        metrics.messagesFiltered++;
+      }
+    } catch (err) {
+      console.error(`[${getTimestamp()}] ❌ AI control command error: ${err.message}`);
+      metrics.errors++;
+    }
+    return;
+  }
+
+  if (await isAiPausedForUser(userId)) {
+    metrics.messagesFiltered++;
+    return;
+  }
+
   // Check rate limits
   if (!checkUserRateLimit(userId)) {
     metrics.rateLimited++;
@@ -260,7 +296,6 @@ async function handleMessage(message) {
     return;
   }
 
-  const command = parseTelegramCommand(text);
   const replyFrom = message.reply_to_message?.from;
   const replyToBot = !!replyFrom && (
     (botIdentity.id && Number(replyFrom.id) === botIdentity.id)
@@ -291,7 +326,8 @@ async function handleMessage(message) {
       replyText = resolveCommandText(command);
     } else {
       const reply = buildAssistantReply(chatId, text);
-      replyText = reply.text;
+      const hint = await getReplyHintForUser(userId);
+      replyText = reply.text + hint;
     }
   } catch (err) {
     console.error(`[${getTimestamp()}] ❌ Error building reply: ${err.message}`);

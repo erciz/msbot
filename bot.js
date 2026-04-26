@@ -13,6 +13,13 @@ import {
   resolveCommandText,
   shouldReplyToMessageByPolicy,
 } from "./assistantCore.js";
+import {
+  getReplyHintForUser,
+  isAiControlCommand,
+  isAiPausedForUser,
+  isPrivilegedTelegramUser,
+  runAiControlCommand,
+} from "./telegramUserControls.js";
 
 function isMainModule() {
   if (!process.argv[1]) return false;
@@ -34,14 +41,23 @@ function ensureToken() {
 
 function registerCommand(bot, command) {
   const regex = new RegExp(`^\\${command}(?:@[a-zA-Z0-9_]+)?(?:\\s|$)`, "i");
-  bot.onText(regex, msg => {
-    const text = resolveCommandText(command);
-    if (text) {
+  bot.onText(regex, async msg => {
+    try {
+      const userId = msg.from?.id;
+      if (isPrivilegedTelegramUser(userId)) return;
+      if (await isAiPausedForUser(userId)) return;
+
+      const text = resolveCommandText(command);
+      if (!text) return;
+
       if (command === "/start") {
         const user = msg.from?.username || msg.from?.id || "unknown";
         console.log(`[/start] ${user}`);
       }
+
       bot.sendMessage(msg.chat.id, text, OPTS_MD);
+    } catch (err) {
+      console.error(`[COMMAND ERROR] ${err.message}`);
     }
   });
 }
@@ -82,11 +98,28 @@ function startPollingBot() {
   registerCommand(bot, "/links");
   registerCommand(bot, "/about");
 
-  bot.on("message", msg => {
+  bot.on("message", async msg => {
     if (!msg?.text) return;
+
+    const userId = msg.from?.id;
+    if (isPrivilegedTelegramUser(userId)) return;
 
     const text = String(msg.text).trim();
     const command = parseTelegramCommand(text);
+
+    if (isAiControlCommand(command)) {
+      try {
+        const replyText = await runAiControlCommand(command, userId);
+        if (replyText) {
+          bot.sendMessage(msg.chat.id, replyText, OPTS_MD);
+        }
+      } catch (err) {
+        console.error(`[AI CONTROL ERROR] ${err.message}`);
+      }
+      return;
+    }
+
+    if (await isAiPausedForUser(userId)) return;
     if (command) return;
 
     const replyFrom = msg.reply_to_message?.from;
@@ -115,7 +148,8 @@ function startPollingBot() {
 
     try {
       const reply = buildAssistantReply(chatId, text);
-      bot.sendMessage(chatId, reply.text, OPTS_MD);
+      const hint = await getReplyHintForUser(userId);
+      bot.sendMessage(chatId, reply.text + hint, OPTS_MD);
     } catch (err) {
       console.error(`[ERROR] ${err.message}`);
       bot.sendMessage(chatId, "Something went wrong\. Please try again\!", OPTS_MD);

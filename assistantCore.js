@@ -29,6 +29,8 @@ export const HELP = `
 /help  — 📚 This help menu
 /links — 🔗 All the cool MoonSale links
 /about — ℹ️ About this awesome bot
+/stopAiBot — ⏸️ Pause AI replies for 12h
+/startAiBot — ▶️ Resume AI replies
 
 *Or just vibe and ask:* 💬
 • 💡 How does vesting work?
@@ -894,7 +896,7 @@ export function resolveCommandText(command, options = {}) {
 }
 
 export function parseTelegramCommand(text) {
-  const m = String(text || "").trim().match(/^\/(start|help|links|about)(?:@[a-zA-Z0-9_]+)?\b/i);
+  const m = String(text || "").trim().match(/^\/(start|help|links|about|stopaibot|startaibot)(?:@[a-zA-Z0-9_]+)?\b/i);
   if (!m) return "";
   return `/${m[1].toLowerCase()}`;
 }

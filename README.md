@@ -81,6 +81,15 @@ Commit and push your repository, including:
 Project Settings -> Environment Variables:
 - TELEGRAM_TOKEN = your BotFather token
 - TELEGRAM_WEBHOOK_SECRET = any strong random string (recommended)
+- ADMIN_TELEGRAM_ID = Telegram user ID to always ignore (optional)
+- ADMIN_TELEGRAM_IDS = comma-separated admin IDs (optional)
+- COMMUNITY_ENGAGEMENT_TELEGRAM_IDS = comma-separated community manager IDs to ignore (optional)
+- AI_BOT_STOP_HOURS = pause duration for `/stopAiBot` (default: 12)
+
+Optional for persistent per-user controls across serverless instances:
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+- SUPABASE_BOT_USER_TABLE (default: `bot_user_controls`)
 
 Redeploy after adding variables.
 
@@ -128,6 +137,29 @@ Expected result:
    - help - Help
    - links - Useful links
    - about - About bot
+    - stopAiBot - Pause AI replies for your user
+    - startAiBot - Resume AI replies for your user
+
+## 4A. Admin Ignore + Per-User AI Pause
+
+Behavior implemented:
+- If sender ID matches admin/community env IDs, bot does not reply at all.
+- From the 2nd AI reply onward (same Telegram user ID), bot appends:
+   - `/stopAiBot` to pause replies
+   - `/startAiBot` to resume replies
+- `/stopAiBot` pauses AI replies for that user for 12h (or `AI_BOT_STOP_HOURS`).
+- `/startAiBot` resumes replies immediately.
+
+If using Supabase persistence, create this table once:
+
+```sql
+create table if not exists public.bot_user_controls (
+   user_id text primary key,
+   reply_count bigint not null default 0,
+   ai_stopped_until timestamptz null,
+   updated_at timestamptz not null default now()
+);
+```
 
 ## 4. Add bot to community group and make it answer messages
 

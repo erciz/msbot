@@ -10,6 +10,13 @@ import {
   resolveCommandText,
   shouldReplyToMessageByPolicy,
 } from "../assistantCore.js";
+import {
+  getReplyHintForUser,
+  isAiControlCommand,
+  isAiPausedForUser,
+  isPrivilegedTelegramUser,
+  runAiControlCommand,
+} from "../telegramUserControls.js";
 
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || "";
@@ -132,6 +139,7 @@ export default async function handler(req, res) {
 
   const text = String(message.text || message.caption || "").trim();
   const chatType = message.chat?.type || "unknown";
+  const userId = message.from?.id;
   const fromUser = message.from?.username || message.from?.first_name || "unknown";
   console.log(`[WEBHOOK] Message from @${fromUser} in ${chatType}: ${text.slice(0, 80)}`);
 
@@ -141,8 +149,41 @@ export default async function handler(req, res) {
     return;
   }
 
+  if (isPrivilegedTelegramUser(userId)) {
+    console.log("[WEBHOOK] Skipped — privileged sender");
+    res.status(200).json({ ok: true, skipped: "privileged_sender" });
+    return;
+  }
+
   try {
     const command = parseTelegramCommand(text);
+
+    if (isAiControlCommand(command)) {
+      const replyText = await runAiControlCommand(command, userId);
+      if (!replyText) {
+        res.status(200).json({ ok: true, skipped: "no_reply" });
+        return;
+      }
+
+      console.log(`[WEBHOOK] Sending AI control reply to chat ${message.chat.id}`);
+      const sendRes = await sendTelegramMessage(message.chat.id, replyText, message.message_id);
+      if (!sendRes.ok) {
+        const errBody = await sendRes.text();
+        console.error(`[WEBHOOK SEND ERROR] ${sendRes.status} ${errBody}`);
+        res.status(502).json({ ok: false, error: "telegram_send_failed" });
+        return;
+      }
+
+      res.status(200).json({ ok: true });
+      return;
+    }
+
+    if (await isAiPausedForUser(userId)) {
+      console.log("[WEBHOOK] Skipped — AI paused for sender");
+      res.status(200).json({ ok: true, skipped: "sender_ai_paused" });
+      return;
+    }
+
     const botIdentity = await getBotIdentity();
     const replyFrom = message.reply_to_message?.from;
     const replyToBot = !!replyFrom && (
@@ -171,7 +212,8 @@ export default async function handler(req, res) {
       replyText = resolveCommandText(command);
     } else {
       const reply = buildAssistantReply(message.chat.id, text);
-      replyText = reply.text;
+      const hint = await getReplyHintForUser(userId);
+      replyText = reply.text + hint;
     }
 
     if (!replyText) {

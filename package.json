@@ -6,19 +6,20 @@
   "type": "module",
   "scripts": {
     "scrape": "node scraper.js",
-    "build":  "node buildKnowledgeBase.js",
+    "build": "node buildKnowledgeBase.js",
     "search": "node searchEngine.js",
-    "test":   "node tests.js",
+    "test": "node tests.js",
     "test:searchEngine": "node searchEngine.regression.js",
     "test:conversation": "node conversationStressTest.js",
-    "bot":    "node bot.js",
+    "bot": "node bot.js",
     "bot:api": "node pollingApiBot.js",
-    "setup":  "node scraper.js && node buildKnowledgeBase.js",
+    "setup": "node scraper.js && node buildKnowledgeBase.js",
     "webhook:set": "node setWebhook.js",
     "webhook:info": "node getWebhookInfo.js"
   },
   "dependencies": {
-    "puppeteer":   "^22.0.0",
-    "node-telegram-bot-api": "^0.66.0"
+    "@supabase/supabase-js": "^2.104.1",
+    "node-telegram-bot-api": "^0.66.0",
+    "puppeteer": "^22.0.0"
   }
 }

@@ -12,6 +12,7 @@ import {
   isGreeting,
   isOffTopic,
   isFollowUpLinkRequest,
+  parseTelegramCommand,
   resolveCommandText,
   WELCOME,
   HELP,
@@ -402,6 +403,18 @@ test("HELP message lists commands", () => {
   assertIncludes(HELP, "/help", "Help should list /help");
   assertIncludes(HELP, "/links", "Help should list /links");
   assertIncludes(HELP, "/about", "Help should list /about");
+  assertIncludes(HELP, "/stopAiBot", "Help should list /stopAiBot");
+  assertIncludes(HELP, "/startAiBot", "Help should list /startAiBot");
+});
+
+test("Parses /stopAiBot command", () => {
+  const cmd = parseTelegramCommand("/stopAiBot");
+  assertEqual(cmd, "/stopaibot", "Should parse /stopAiBot command");
+});
+
+test("Parses /startAiBot command with mention", () => {
+  const cmd = parseTelegramCommand("/startAiBot@MoonsaleAssistantBot");
+  assertEqual(cmd, "/startaibot", "Should parse mentioned /startAiBot command");
 });
 
 test("LINKS message has presale link", () => {
