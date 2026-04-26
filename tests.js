@@ -19,6 +19,7 @@ import {
   FALLBACK,
   OFF_TOPIC_REPLY,
 } from "./assistantCore.js";
+import { runSearchEngineRegressionSuite } from "./searchEngine.regression.js";
 
 let passedTests = 0;
 let failedTests = 0;
@@ -453,6 +454,24 @@ test("Search finds vesting info", () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // 🎨 RESPONSE FORMATTING TESTS
 // ═════════════════════════════════════════════════════════════════════════════
+
+console.log("\n📌 SEARCH ENGINE REGRESSION TESTS");
+console.log("=".repeat(70));
+
+test("SearchEngine interactive regression suite passes", () => {
+  const result = runSearchEngineRegressionSuite({ verbose: false });
+
+  if (result.failed > 0) {
+    const preview = result.failures
+      .slice(0, 3)
+      .map(f => f.name)
+      .join(", ");
+
+    throw new Error(
+      `SearchEngine regression failed (${result.failed}/${result.total}). Failing cases: ${preview}`
+    );
+  }
+});
 
 console.log("\n📌 RESPONSE FORMATTING TESTS");
 console.log("=".repeat(70));

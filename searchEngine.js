@@ -106,6 +106,22 @@ function fuzzyScore(a, b) {
   return Math.max(0, 1 - levenshtein(a, b) / maxLen);
 }
 
+const SOURCE_BASE_PRIORITY = Object.freeze({
+  custom_qa: 0.95,
+  manual_qa: 0.9,
+  custom_variant: 0.78,
+  manual_variant: 0.72,
+  website_listing: 0.68,
+  website_listing_variant: 0.62,
+  website_faq: 0.56,
+  website_card: 0.54,
+  website_variant: 0.45,
+  website_chunk: 0.1,
+  scraped_chunk: 0.1,
+  qa_other: 0.2,
+  other: 0,
+});
+
 // ── SearchEngine class ────────────────────────────────────────────────────────
 export class SearchEngine {
   constructor(kbPath = KB_FILE) {
@@ -246,22 +262,89 @@ export class SearchEngine {
   }
 
   _sourcePriorityBoost(entry, intent) {
-    const source = String(entry?.source || "");
+    const sourceTier = this._resolveSourceTier(entry);
     const tags = new Set(entry.tags || []);
+    const source = String(entry?.source || "");
     const isWebsite = /^https?:\/\//i.test(source);
 
-    let score = 0;
+    let score = SOURCE_BASE_PRIORITY[sourceTier] ?? 0;
 
-    if (isWebsite) score += 0.1;
-    if (intent.asksLink && isWebsite) score += 0.55;
-    if (intent.asksSingleToken) {
-      if (tags.has("project_lookup") && isWebsite) score += 1.2;
-      else score -= 0.2;
+    const asksDocsKnowledge =
+      intent.asksHow
+      || intent.asksFee
+      || intent.asksClaim
+      || intent.asksRefund
+      || intent.asksRefundApproval
+      || intent.asksRefundDeadline
+      || intent.asksSoftcapFailure
+      || intent.asksHardcapDefinition
+      || intent.asksMetaMask
+      || intent.asksWallet
+      || intent.asksRugPull
+      || intent.asksRugPrevention
+      || intent.asksMarketing
+      || intent.asksRevenue
+      || intent.asksRoadmap
+      || intent.asksComparison
+      || intent.asksIdentity
+      || intent.asksDeployToken
+      || intent.asksPortfolio;
+
+    const asksWebsiteLookup =
+      intent.asksSingleToken
+      || intent.asksStatus
+      || intent.asksLink
+      || intent.asksUrl;
+
+    if (asksDocsKnowledge) {
+      if (sourceTier === "manual_qa" || sourceTier === "custom_qa") score += 1.0;
+      if (sourceTier === "manual_variant" || sourceTier === "custom_variant") score += 0.65;
+      if (sourceTier === "website_listing" || sourceTier === "website_listing_variant") score -= 0.55;
+      if (sourceTier === "website_chunk" || sourceTier === "scraped_chunk") score -= 0.3;
     }
+
+    if (asksWebsiteLookup) {
+      if (sourceTier === "website_listing" || sourceTier === "website_listing_variant") score += 1.2;
+      if (sourceTier === "website_faq" || sourceTier === "website_card" || sourceTier === "website_variant") score += 0.55;
+      if ((sourceTier === "manual_qa" || sourceTier === "custom_qa") && intent.asksSingleToken) score -= 0.35;
+      if (sourceTier === "website_chunk" || sourceTier === "scraped_chunk") score -= 0.25;
+    }
+
+    if (intent.asksSingleToken && tags.has("project_lookup") && isWebsite) score += 1.2;
     if (intent.asksStatus && tags.has("status")) score += 0.35;
+    if (intent.asksLink && isWebsite) score += 0.4;
     if (intent.asksComparison && !tags.has("comparison")) score -= 0.2;
 
     return score;
+  }
+
+  _resolveSourceTier(entry) {
+    const explicit = String(entry?.sourceType || "").trim();
+    if (explicit) return explicit;
+
+    const source = String(entry?.source || "");
+    const tags = new Set(entry?.tags || []);
+    const isWebsite = /^https?:\/\//i.test(source);
+
+    if (entry?.type === "scraped") return "scraped_chunk";
+
+    if (source === "manual") {
+      if (entry?.type === "qa_variant") return "manual_variant";
+      return "manual_qa";
+    }
+
+    if (isWebsite) {
+      if (tags.has("project_lookup") && tags.has("website_data")) {
+        if (entry?.type === "qa_variant") return "website_listing_variant";
+        return "website_listing";
+      }
+      if (entry?.type === "qa_variant") return "website_variant";
+      return "website_faq";
+    }
+
+    if (entry?.type === "qa" || entry?.type === "qa_variant" || entry?.answer) return "qa_other";
+
+    return "other";
   }
 
   _detectIntent(query) {
@@ -519,8 +602,76 @@ export class SearchEngine {
     return concise.length > 420 ? `${concise.slice(0, 417)}...` : concise;
   }
 
+  _getAnswerBucket(entry) {
+    const tier = this._resolveSourceTier(entry);
+    if (["manual_qa", "custom_qa", "manual_variant", "custom_variant"].includes(tier)) return "manual";
+    if (["website_listing", "website_listing_variant"].includes(tier)) return "website_listing";
+    if (["website_faq", "website_card", "website_variant"].includes(tier)) return "website_structured";
+    if (["website_chunk", "scraped_chunk"].includes(tier)) return "website_chunk";
+    if (entry?.type === "qa" || entry?.type === "qa_variant" || entry?.answer) return "qa_other";
+    return "other";
+  }
+
+  _getAnswerPriorityOrder(intent) {
+    const docsFirst =
+      intent.asksHow
+      || intent.asksFee
+      || intent.asksClaim
+      || intent.asksRefund
+      || intent.asksRefundDeadline
+      || intent.asksSoftcapFailure
+      || intent.asksDeployToken
+      || intent.asksPortfolio
+      || intent.asksIdentity
+      || intent.asksComparison;
+
+    const websiteFirst = intent.asksSingleToken || intent.asksStatus || intent.asksLink || intent.asksUrl;
+
+    if (websiteFirst && !docsFirst) {
+      return ["website_listing", "website_structured", "manual", "qa_other", "website_chunk", "other"];
+    }
+
+    return ["manual", "website_structured", "qa_other", "website_listing", "website_chunk", "other"];
+  }
+
+  _selectBestAnswerCandidate(results, normalizedQuery, intent) {
+    const isSingleToken = /^[a-z0-9_-]{3,20}$/.test(normalizedQuery);
+    const baseFloor = isSingleToken ? 0.01 : 0.08;
+
+    const candidates = results
+      .filter(r => this._extractAnswerText(r).length > 20)
+      .map(r => ({ ...r, _bucket: this._getAnswerBucket(r) }));
+
+    if (!candidates.length) return null;
+
+    const floors = {
+      manual: baseFloor,
+      website_structured: Math.max(0.01, baseFloor - 0.01),
+      qa_other: baseFloor + 0.03,
+      website_listing: isSingleToken || intent.asksStatus ? 0.01 : baseFloor + 0.06,
+      website_chunk: baseFloor + 0.16,
+      other: baseFloor + 0.2,
+    };
+
+    const order = this._getAnswerPriorityOrder(intent);
+    for (const bucket of order) {
+      const inBucket = candidates
+        .filter(c => c._bucket === bucket)
+        .sort((a, b) => b._score - a._score);
+
+      if (!inBucket.length) continue;
+
+      const minScore = floors[bucket] ?? baseFloor;
+      const passing = inBucket.find(c => c._score >= minScore);
+      if (passing) return passing;
+    }
+
+    return candidates.sort((a, b) => b._score - a._score)[0];
+  }
+
   answer(query) {
     const normal = normalizeUserQuery(query);
+    const intent = this._detectIntent(normal);
 
     const isGroupAboutIntent =
       /\b(this\s+)?(group|chat|channel|community)\b/.test(normal)
@@ -653,29 +804,11 @@ export class SearchEngine {
       );
     }
 
-    const top = results[0];
+    const top = this._selectBestAnswerCandidate(results, normal, intent) || results[0];
 
-    const qaHit = [...results]
-      .filter(r =>
-        (r.type === "qa" || r.type === "qa_variant" || !!r.answer)
-        && this._extractAnswerText(r).length > 20
-      )
-      .sort((a, b) => {
-        const aTags = new Set(a.tags || []);
-        const bTags = new Set(b.tags || []);
-
-        let aRank = a._score;
-        let bRank = b._score;
-
-        if (isSingleToken) {
-          if (aTags.has("project_lookup")) aRank += 2.2;
-          if (bTags.has("project_lookup")) bRank += 2.2;
-          if (String(a.source || "").startsWith("http")) aRank += 0.4;
-          if (String(b.source || "").startsWith("http")) bRank += 0.4;
-        }
-
-        return bRank - aRank;
-      })[0];
+    const qaHit = top && (top.type === "qa" || top.type === "qa_variant" || !!top.answer)
+      ? top
+      : null;
 
     if (qaHit && qaHit._score > (isSingleToken ? 0.01 : 0.08)) {
       let answer = this._extractAnswerText(qaHit);
@@ -700,7 +833,11 @@ export class SearchEngine {
 }
 
 // ── CLI test mode ─────────────────────────────────────────────────────────────
-if (process.argv[1] && process.argv[1].includes("searchEngine")) {
+const IS_SEARCH_ENGINE_CLI =
+  !!process.argv[1]
+  && path.basename(process.argv[1]).toLowerCase() === "searchengine.js";
+
+if (IS_SEARCH_ENGINE_CLI) {
   console.log("\n MoonSale Search Engine — Test Mode");
   console.log("=".repeat(50));
 

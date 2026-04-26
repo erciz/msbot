@@ -1453,6 +1453,22 @@ function parseListingMetadata(page) {
   return { projectName, symbol, saleType, status, source };
 }
 
+function getVariantSourceType(baseSourceType) {
+  switch (baseSourceType) {
+    case "custom_qa":
+      return "custom_variant";
+    case "manual_qa":
+      return "manual_variant";
+    case "website_listing":
+      return "website_listing_variant";
+    case "website_faq":
+    case "website_card":
+      return "website_variant";
+    default:
+      return "variant";
+  }
+}
+
 // ── Build the knowledge base ──────────────────────────────────────────────────
 function build() {
   console.log("\n" + "=".repeat(60));
@@ -1462,6 +1478,9 @@ function build() {
   const entries   = [];
   const tagIndex  = {};
   const customQA = loadCustomQA();
+  const customKeys = new Set(
+    customQA.map(qa => `${normaliseQuestion(qa.question || "")}::${normaliseQuestion(qa.answer || "")}`)
+  );
   const curatedManual = [...ALL_MANUAL_QA, ...customQA];
   const manualSeen = new Set();
   const listingSeen = new Set();
@@ -1473,6 +1492,7 @@ function build() {
     const key = `${normaliseQuestion(qa.question || "")}::${normaliseQuestion(qa.answer || "")}`;
     if (!qa.question || !qa.answer || manualSeen.has(key)) continue;
     manualSeen.add(key);
+    const sourceType = customKeys.has(key) ? "custom_qa" : "manual_qa";
 
     const id = `manual_${entries.length}`;
     entries.push({
@@ -1484,6 +1504,7 @@ function build() {
       text:     `Q: ${qa.question}\nA: ${qa.answer}`,
       tags:     qa.tags,
       source:   "manual",
+      sourceType,
     });
     manualAdded++;
   }
@@ -1513,6 +1534,7 @@ function build() {
             text:     `Q: ${listingMeta.projectName} (${listingMeta.symbol})\nA: ${listingMeta.projectName} (${listingMeta.symbol}) is listed on MoonSale as a ${listingMeta.saleType}. Current status: ${listingMeta.status}. Official listing: ${listingMeta.source}`,
             tags:     ["project_lookup", "website_data", "status", isPresale ? "presale" : "fair_launch"],
             source:   listingMeta.source,
+            sourceType: "website_listing",
           });
 
           listingSeen.add(listingKey);
@@ -1537,6 +1559,7 @@ function build() {
             text:     `Q: ${faq.question}\nA: ${faq.answer}`,
             tags:     detectTags(faq.question + " " + faq.answer),
             source:   page.source,
+            sourceType: "website_faq",
           });
           scrapedChunks++;
         }
@@ -1554,6 +1577,7 @@ function build() {
             text:     `Q: ${card.heading}\nA: ${card.body}`,
             tags:     detectTags(card.heading + " " + card.body),
             source:   page.source,
+            sourceType: "website_card",
           });
           scrapedChunks++;
         }
@@ -1569,6 +1593,7 @@ function build() {
           text:   chunk,
           tags:   detectTags(chunk),
           source: page.source,
+          sourceType: "website_chunk",
         });
         scrapedChunks++;
       }
@@ -1622,6 +1647,7 @@ function build() {
           text:     `Q: ${q}\nA: ${answer}`,
           tags:     entry.tags || [],
           source:   entry.source,
+          sourceType: getVariantSourceType(entry.sourceType),
           parentId: entry.id,
         });
       }

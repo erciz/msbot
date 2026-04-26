@@ -8,6 +8,8 @@
     "scrape": "node scraper.js",
     "build":  "node buildKnowledgeBase.js",
     "search": "node searchEngine.js",
+    "test":   "node tests.js",
+    "test:searchEngine": "node searchEngine.regression.js",
     "bot":    "node bot.js",
     "bot:api": "node pollingApiBot.js",
     "setup":  "node scraper.js && node buildKnowledgeBase.js",
