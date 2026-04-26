@@ -85,7 +85,6 @@ const SPECIFIC_PRESALE_REPLY = [
   "📄 Source: https://moonsale.app/presale",
   "",
   "Always DYOR before you invest in any project.",
-  "Happy investing! 🚀",
 ].join("\n");
 
 export const OPTS_MD = {
@@ -141,21 +140,7 @@ const TONE_CASUAL_PATTERNS = [
   /\btldr\b/i,
 ];
 
-const CASUAL_INTROS = [
-  "Got you!",
-  "Sure thing!",
-  "Quick answer:",
-  "No worries!",
-];
 
-const FRIENDLY_INTROS = [
-  "Here you go:",
-  "Happy to help:",
-  "This should help:",
-];
-
-const CASUAL_EMOJIS = ["😄", "✨", "🚀", "🙌"];
-const FRIENDLY_EMOJIS = ["🙂", "✅", "💡"];
 
 const PROJECT_TERM_STOPWORDS = new Set([
   "presale", "fair", "launch", "status", "listed", "moon", "moonsale",
@@ -338,14 +323,8 @@ function detectTone(query) {
   return "friendly";
 }
 
-function styleAnswer(answer, tone) {
-  if (tone === "professional") {
-    return `Answer:\n${answer}`;
-  }
-  if (tone === "casual") {
-    return `${pick(CASUAL_INTROS)} ${pick(CASUAL_EMOJIS)}\n\n${answer}`;
-  }
-  return `${pick(FRIENDLY_INTROS)} ${pick(FRIENDLY_EMOJIS)}\n\n${answer}`;
+function styleAnswer(answer, _tone) {
+  return answer;
 }
 
 export function escape(text) {
