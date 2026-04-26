@@ -188,6 +188,9 @@ const SMALL_TALK_PATTERNS = [
   /^apa\s+kabar\??$/i,
 ];
 
+const CONTEXT_CARRY_PREFIX_RE = /^(and|also|then|plus|so|now|ok|okay|alright|and if|if so|what about|how about|and what about)\b[,:]?\s*/i;
+const CONTEXT_CARRY_HINT_RE = /\b(withdraw|penalty|refund|deadline|claim|fee|fees|rate|price|softcap|hardcap|liquidity|lock|live|vesting|eligibility|scanner|deploy|finalize|failed|fail|whitelist|min|max)\b/i;
+
 
 
 const PROJECT_TERM_STOPWORDS = new Set([
@@ -208,6 +211,13 @@ const RESERVED_GENERIC_SINGLE_TERMS = new Set([
   "moonsale", "presale", "fairlaunch", "fair", "launch", "tokenomics",
   "fees", "refund", "refunds", "liquidity", "vesting", "audit", "kyc",
   "wallet", "metamask", "support", "help", "docs", "whitepaper", "link",
+]);
+
+const DOMAIN_TOPIC_TERMS = new Set([
+  "sale", "presale", "launch", "fair", "rate", "price", "softcap", "hardcap",
+  "refund", "refunds", "deadline", "claim", "claims", "withdraw", "penalty",
+  "liquidity", "lock", "vesting", "token", "tokens", "scanner", "eligibility",
+  "failed", "fails", "failure", "difference", "vs", "min", "max", "fee", "fees",
 ]);
 
 const GENERIC_PRESALE_BROWSE_RESPONSE = `
@@ -340,6 +350,29 @@ function isSmallTalkQuery(query) {
   const q = normalizeLoose(query);
   if (!q) return false;
   return SMALL_TALK_PATTERNS.some(p => p.test(q));
+}
+
+function isContextCarryForwardQuery(query) {
+  const q = normalizeLoose(query);
+  if (!q) return false;
+  if (/^\/[a-z0-9_]+/.test(q)) return false;
+  if (isFollowUpLinkRequest(q)) return false;
+  if (CONTEXT_CARRY_PREFIX_RE.test(q)) return true;
+
+  const tokens = tokenizeSimple(q);
+  if (tokens.length <= 4 && CONTEXT_CARRY_HINT_RE.test(q)) return true;
+  if (tokens.length <= 3 && /\b(it|that|this|same)\b/.test(q)) return true;
+
+  return false;
+}
+
+function buildContextualizedQuery(query, context) {
+  const q = normalizeIncomingQuery(query);
+  const topic = normalizeIncomingQuery(context?.lastTopic || "");
+  if (!q || !topic) return q;
+
+  const tail = q.replace(CONTEXT_CARRY_PREFIX_RE, "").trim() || q;
+  return `${topic} ${tail}`.replace(/\s+/g, " ").trim();
 }
 
 function isCreateFairLaunchQuery(query) {
@@ -490,14 +523,21 @@ function isSpecificPresaleQuery(query, topResult) {
   ));
   if (!meaningfulTokens.length) return false;
 
-  const hasProjectToken = meaningfulTokens.some(t => terms.has(t));
+  const projectCandidateTokens = meaningfulTokens.filter(t => !DOMAIN_TOPIC_TERMS.has(t));
+  if (!projectCandidateTokens.length) return false;
+
+  const hasProjectToken = projectCandidateTokens.some(t => terms.has(t));
   const topIsProjectLookup = !!topResult && Array.isArray(topResult.tags) && topResult.tags.includes("project_lookup");
 
   const singleToken = queryTokens.length === 1;
-  const singleTokenProjectLike = singleToken && !RESERVED_GENERIC_SINGLE_TERMS.has(queryTokens[0]);
+  const singleTokenProjectLike =
+    singleToken
+    && !RESERVED_GENERIC_SINGLE_TERMS.has(queryTokens[0])
+    && !DOMAIN_TOPIC_TERMS.has(queryTokens[0]);
   const asksSpecificDetail = /\b(status|details?|price|hardcap|softcap|buy|invest|claim|live|cancelled|canceled|upcoming|filled|failed)\b/.test(q);
 
   if (hasProjectToken) return true;
+  if (singleTokenProjectLike && terms.has(queryTokens[0])) return true;
   if (singleTokenProjectLike && topIsProjectLookup) return true;
   if (topIsProjectLookup && asksSpecificDetail) return true;
 
@@ -546,6 +586,7 @@ function getChatContext(chatId) {
       lastQuery: "",
       lastTopic: "",
       lastLink: "",
+      lastEffectiveQuery: "",
       updatedAt: 0,
     });
   }
@@ -558,7 +599,7 @@ function extractUrls(text) {
   return [...new Set(cleaned)];
 }
 
-function rememberChatContext(chatId, query, answer, topResult) {
+function rememberChatContext(chatId, query, answer, topResult, effectiveQuery = "") {
   const ctx = getChatContext(chatId);
 
   const links = [];
@@ -569,8 +610,15 @@ function rememberChatContext(chatId, query, answer, topResult) {
 
   const uniqueLinks = [...new Set(links)];
 
+  const normalizedQuery = normalizeLoose(query);
+  const topTags = new Set(topResult?.tags || []);
+  const topIsProjectLookup = topTags.has("project_lookup");
+  const queryLooksProjectToken = /^[a-z0-9_-]{3,20}$/.test(normalizedQuery);
+  const useTopTitle = !!topResult?.title && (!topIsProjectLookup || queryLooksProjectToken);
+
   ctx.lastQuery = query;
-  ctx.lastTopic = (topResult?.title || query || "").trim();
+  ctx.lastEffectiveQuery = effectiveQuery || query;
+  ctx.lastTopic = (useTopTitle ? topResult.title : query || "").trim();
   if (uniqueLinks.length > 0) {
     ctx.lastLink = uniqueLinks[0];
   }
@@ -725,6 +773,15 @@ export function buildAssistantReply(chatId, query, options = {}) {
 
   const q = normalizeIncomingQuery(query);
   const context = getChatContext(chatId);
+  const hasFreshContext = context.updatedAt && (Date.now() - context.updatedAt <= FOLLOW_UP_CONTEXT_TTL_MS);
+
+  const shouldCarryContext = hasFreshContext && context.lastTopic && isContextCarryForwardQuery(q);
+  const effectiveQuery = shouldCarryContext
+    ? buildContextualizedQuery(q, context)
+    : q;
+  const lastTopicLooksProjectToken = /^[a-z0-9_-]{3,20}$/.test(normalizeLoose(context.lastTopic || ""));
+  const shouldBypassPresaleGuard = shouldCarryContext && !lastTopicLooksProjectToken;
+  const isGenericWorkflowQuestion = /\b(if|when)\b.*\b(sale|presale|launch)\b.*\b(fail|fails|failed)\b|\b(sale|presale|launch)\b.*\bfailed\b.*\bwhat\s+happens\b|\btokens\s+for\s+sale\b.*\btokens\s+for\s+liquidity\b|\bsale\s+vs\s+liquidity\s+tokens?\s+difference\b/.test(normalizeLoose(effectiveQuery));
 
   if (!q) {
     return respond("greeting", getRandomGreeting());
@@ -762,17 +819,12 @@ export function buildAssistantReply(chatId, query, options = {}) {
     return respond("overview", MOONSALE_OVERVIEW_REPLY);
   }
 
-  const hasFreshContext = context.lastLink && (Date.now() - context.updatedAt <= FOLLOW_UP_CONTEXT_TTL_MS);
-
-  if (isFollowUpLinkRequest(q) && hasFreshContext) {
+  if (isFollowUpLinkRequest(q) && hasFreshContext && context.lastLink) {
     const topicText = context.lastTopic ? ` (${context.lastTopic})` : "";
     const raw = `Here is the exact link from your previous topic${topicText}:\n📄 Source: ${context.lastLink}`;
     const tone = detectTone(q);
     return respond("followup", formatAnswer(styleAnswer(raw, tone)));
   }
-
-  const engine = getEngine();
-  const topResult = engine.search(q, 1)[0];
 
   // Check for generic presale/launch browse queries
   const isGenericBrowseQuery = /^(launch|presale|fair\s*launch?|fair|browse|show|list)$/i.test(q);
@@ -781,23 +833,26 @@ export function buildAssistantReply(chatId, query, options = {}) {
       chatId,
       q,
       GENERIC_PRESALE_BROWSE_RESPONSE,
-      { title: "Browse presales", source: "https://moonsale.app/presale" }
+      { title: "Browse presales", source: "https://moonsale.app/presale" },
+      effectiveQuery
     );
     return respond("presale_browse", GENERIC_PRESALE_BROWSE_RESPONSE);
   }
 
-  if (isSpecificPresaleQuery(q, topResult)) {
+  if (!shouldBypassPresaleGuard && !isGenericWorkflowQuestion && isSpecificPresaleQuery(effectiveQuery, null)) {
     rememberChatContext(
       chatId,
       q,
       SPECIFIC_PRESALE_REPLY,
-      { title: "Presale listings", source: "https://moonsale.app/presale" }
+      { title: "Presale listings", source: "https://moonsale.app/presale" },
+      effectiveQuery
     );
 
     return respond("presale_guard", SPECIFIC_PRESALE_REPLY);
   }
 
-  const raw = engine.answer(q);
+  const engine = getEngine();
+  const raw = engine.answer(effectiveQuery);
 
   // Final safety net: never expose specific listing details directly.
   const leaksSpecificListing = /\bis listed on moonsale as\b|\bcurrent status:\b|\bofficial listing:\b/i.test(raw);
@@ -815,12 +870,12 @@ export function buildAssistantReply(chatId, query, options = {}) {
     return respond("fallback", FALLBACK);
   }
 
-  rememberChatContext(chatId, q, raw, topResult);
+  rememberChatContext(chatId, q, raw, null, effectiveQuery);
 
   const tone = detectTone(q);
   const styled = styleAnswer(raw, tone);
   const formattedText = formatAnswer(styled);
-  const tip = getContextualTip(q, "answer");
+  const tip = getContextualTip(effectiveQuery, "answer");
   
   return respond("answer", formattedText + tip);
 }

@@ -34,6 +34,7 @@ const QUERY_NORMALIZATION_RULES = [
   [/\bmoon\s+sale\b/gi, "moonsale"],
   [/\bwen\b/gi, "when"],
   [/\bwats\b|\bwhats\b|\bwat's\b|\bwhts\b/gi, "what is"],
+  [/\bpanelty\b|\bpenelty\b|\bpanalty\b/gi, "penalty"],
   [/\beligiblity\b|\beligibility\b|\beligiblity\b|\beligibity\b/gi, "eligibility"],
   [/\bresrves\b|\breserves\b/gi, "reserves"],
   [/\bliq\s*pool\b/gi, "liquidity pool"],
@@ -743,8 +744,32 @@ export class SearchEngine {
         answer: "MoonSale is a permissionless launchpad for BNB Chain and Ethereum where projects run presales or fair launches with on-chain refunds, automatic liquidity locking, and audited smart-contract protections.",
       },
       {
+        pattern: /^what\s+is\s+presale\s+rate\??$|^presale\s+rate\??$/,
+        answer: "Presale rate is the fixed token price set by the creator for contributions before listing. Example: 1 BNB = X tokens based on sale configuration.",
+      },
+      {
+        pattern: /^what\s+is\s+fair\s*launch\??$|^fair\s*launch\??$/,
+        answer: "Fair launch is a sale model where final token price is discovered from total funds raised versus total token pool, instead of a fixed presale price.",
+      },
+      {
+        pattern: /^liquidity\s*lock\??$/,
+        answer: "Liquidity lock means LP tokens are locked for a defined duration after successful finalization, reducing rug-pull risk.",
+      },
+      {
+        pattern: /^token\s*scanner\??$|^what\s+is\s+token\s+scanner\??$/,
+        answer: "Token scanner checks token safety-related signals such as ownership, blacklist behavior, liquidity conditions, and other launch eligibility factors.",
+      },
+      {
+        pattern: /^claim\s+tokens?\??$|^when\s+can\s+i\s+claim\s+tokens?\??$/,
+        answer: "Tokens are claimable after successful finalization, according to vesting settings. In no-vesting setup, claims open immediately after finalize.",
+      },
+      {
         pattern: /(?:\bsoft\s*cap\b|\bsoftcap\b).*\b(not\s+reached|not\s+met|fail|fails|failed)\b|\b(not\s+reached|not\s+met)\b.*(?:\bsoft\s*cap\b|\bsoftcap\b)/,
         answer: "If softcap is not reached, the sale fails and contributors can claim full refunds directly from the smart contract.",
+      },
+      {
+        pattern: /\b(if|when)\b.*\b(sale|presale|fair\s*launch|launch)\b.*\b(fail|fails|failed)\b|\b(sale|presale|launch)\b.*\b(fail|fails|failed)\b.*\bwhat\s+happens\b/,
+        answer: "If a sale fails (typically softcap not reached), contributors can claim full refunds directly from the smart contract.",
       },
       {
         pattern: /\brefund\b.*\b(how\s+long|deadline|time\s+limit)\b|\b(how\s+long|deadline|time\s+limit)\b.*\brefund\b/,
@@ -755,7 +780,7 @@ export class SearchEngine {
         answer: "Yes. MoonSale supports MetaMask for wallet connection on supported EVM networks.",
       },
       {
-        pattern: /\btoken\s+failed\s+eligibility\s+check\b|\beligibility\s+check\s+failed\b|\bfailed\s+eligibility\b/,
+        pattern: /\btoken\s+failed\s+eligibility\s+check\b|\beligibility\s+check\s+failed\b|\bfailed\s+eligibility\b|\beligibility\b.*\bfailed\b/,
         answer: "A blocking eligibility rule failed. Review scanner output and resolve the specific blocked item before deploying.",
       },
       {
@@ -775,8 +800,16 @@ export class SearchEngine {
         answer: "Tokens for Sale are for contributors. Tokens for Liquidity are for DEX pool creation at finalization.",
       },
       {
+        pattern: /\bwithdraw\b.*\bpenalt(y|ies)\b|\bpenalt(y|ies)\b.*\bwithdraw\b/,
+        answer: "Yes. You can withdraw contribution while sale is active, and a small penalty applies to reduce manipulation.",
+      },
+      {
         pattern: /\bunlocked\s+tokens\s+within\s+limit\b|\bplatform\s+limit\b.*\b20\s*%\b/,
         answer: "Post-deploy unlocked wallet balance must remain within platform max threshold. If it exceeds the limit, deployment is blocked.",
+      },
+      {
+        pattern: /\bno\s+vesting\b|\bwithout\s+vesting\b/,
+        answer: "No vesting means tokens are claimable immediately after successful finalization, instead of gradual unlocks.",
       },
       {
         pattern: /\bdraft\s+saved\b.*\bstart\s+over\b|\bstart\s+over\b.*\bdraft\b/,
@@ -799,7 +832,7 @@ export class SearchEngine {
         answer: "Treat that as a scam risk. Never send funds in DMs for whitelist or allocation. Only contribute through the official MoonSale sale page with your wallet connected.",
       },
       {
-        pattern: /\bextend\b.*\bliquidity\s*lock\b.*\b(live|running|active)\b|\bliquidity\s*lock\b.*\bextend\b.*\b(live|running|active)\b/,
+        pattern: /\bextend\b.*\bliquidity\s*lock\b.*\b(live|running|active|mode)\b|\bliquidity\s*lock\b.*\bextend\b.*\b(live|running|active|mode)\b|\blive\s*mode\b.*\bliquidity\s*lock\b|\bliquidity\s*lock\b.*\blive\s*mode\b/,
         answer: "Once a presale or fair launch contract is deployed and live, liquidity lock cannot be extended during live mode. You can extend or adjust lock only after finalizing the sale.",
       },
       {

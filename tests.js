@@ -352,6 +352,32 @@ test("Unknown question gets helpful response", () => {
   );
 });
 
+test("Follow-up context: live mode lock extension", () => {
+  const chatId = 93001;
+  buildAssistantReply(chatId, "liquidity lock", { format: "plain" });
+  const follow = buildAssistantReply(chatId, "and if live mode?", { format: "plain" });
+
+  assertIncludes(follow.text, "live mode", "Follow-up should preserve lock context");
+  assertIncludes(follow.text, "cannot", "Follow-up should return lock extension restriction");
+});
+
+test("Follow-up context: eligibility failed after scanner", () => {
+  const chatId = 93002;
+  buildAssistantReply(chatId, "token scanner", { format: "plain" });
+  const follow = buildAssistantReply(chatId, "and eligibility failed?", { format: "plain" });
+
+  assertIncludes(follow.text, "eligibility", "Follow-up should stay on scanner eligibility topic");
+  assertIncludes(follow.text, "blocking", "Follow-up should explain blocking eligibility rule");
+});
+
+test("Follow-up context: sale fails after claim tokens", () => {
+  const chatId = 93003;
+  buildAssistantReply(chatId, "claim tokens", { format: "plain" });
+  const follow = buildAssistantReply(chatId, "and if sale fails?", { format: "plain" });
+
+  assertIncludes(follow.text, "refund", "Follow-up should map failed sale to refund flow");
+});
+
 // ═════════════════════════════════════════════════════════════════════════════
 // 💬 COMMAND MESSAGES TESTS
 // ═════════════════════════════════════════════════════════════════════════════

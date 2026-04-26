@@ -10,6 +10,7 @@
     "search": "node searchEngine.js",
     "test":   "node tests.js",
     "test:searchEngine": "node searchEngine.regression.js",
+    "test:conversation": "node conversationStressTest.js",
     "bot":    "node bot.js",
     "bot:api": "node pollingApiBot.js",
     "setup":  "node scraper.js && node buildKnowledgeBase.js",
