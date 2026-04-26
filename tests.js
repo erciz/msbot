@@ -180,6 +180,10 @@ test("Does not detect 'click the link' as follow-up", () => {
   assert(!isFollowUpLinkRequest("click the link"), "Should require context reference");
 });
 
+test("Detects 'is there a link' as follow-up", () => {
+  assert(isFollowUpLinkRequest("is there a link ?"), "Should detect natural follow-up link phrasing");
+});
+
 // ═════════════════════════════════════════════════════════════════════════════
 // 🖼️ MEDIA HANDLING TESTS
 // ═════════════════════════════════════════════════════════════════════════════
@@ -385,6 +389,15 @@ test("Follow-up context: live mode lock extension", () => {
   assertIncludes(follow.text, "cannot", "Follow-up should return lock extension restriction");
 });
 
+test("Follow-up context variant: can extend in live mode", () => {
+  const chatId = 93011;
+  buildAssistantReply(chatId, "liquidity lock", { format: "plain" });
+  const follow = buildAssistantReply(chatId, "can extend in live mode", { format: "plain" });
+
+  assertIncludes(follow.text, "live mode", "Variant follow-up should keep live mode context");
+  assertIncludes(follow.text, "cannot", "Variant follow-up should explain extension restriction");
+});
+
 test("Follow-up context: eligibility failed after scanner", () => {
   const chatId = 93002;
   buildAssistantReply(chatId, "token scanner", { format: "plain" });
@@ -394,12 +407,39 @@ test("Follow-up context: eligibility failed after scanner", () => {
   assertIncludes(follow.text, "blocking", "Follow-up should explain blocking eligibility rule");
 });
 
+test("Follow-up context variant: eligibility fail", () => {
+  const chatId = 93012;
+  buildAssistantReply(chatId, "token scanner", { format: "plain" });
+  const follow = buildAssistantReply(chatId, "eligibility fail", { format: "plain" });
+
+  assertIncludes(follow.text, "eligibility", "Variant should stay on scanner eligibility context");
+  assertIncludes(follow.text, "blocking", "Variant should mention blocking rules");
+});
+
 test("Follow-up context: sale fails after claim tokens", () => {
   const chatId = 93003;
   buildAssistantReply(chatId, "claim tokens", { format: "plain" });
   const follow = buildAssistantReply(chatId, "and if sale fails?", { format: "plain" });
 
   assertIncludes(follow.text, "refund", "Follow-up should map failed sale to refund flow");
+});
+
+test("Failed presale answer is platform-oriented", () => {
+  const reply = buildAssistantReply(93004, "what if my presale is failed", { format: "plain" });
+
+  assertEqual(reply.kind, "failed_sale_refund", "Failed presale query should use dedicated refund guidance");
+  assertIncludes(reply.text, "moonsale.app", "Failed presale guidance should include MoonSale platform links");
+  assert(!reply.text.toLowerCase().includes("smart contract"), "Failed presale guidance should stay platform-oriented");
+});
+
+test("Follow-up link uses previous failed-sale context", () => {
+  const chatId = 93005;
+  buildAssistantReply(chatId, "what if my presale is failed", { format: "plain" });
+  const follow = buildAssistantReply(chatId, "is there a link ?", { format: "plain" });
+
+  assertEqual(follow.kind, "followup", "Generic link ask should resolve to previous topic link");
+  assertIncludes(follow.text, "https://www.moonsale.app", "Follow-up should provide a MoonSale link");
+  assert(!follow.text.toLowerCase().includes("verified answer"), "Follow-up should not fall back to generic docs response");
 });
 
 // ═════════════════════════════════════════════════════════════════════════════

@@ -310,6 +310,49 @@ const CREATE_TOKEN_GUIDE_REPLY = [
   "4\\) Then create a presale at [moonsale\\.app/create](https://www.moonsale.app/create)",
 ].join("\n");
 
+const LOCK_EXTENSION_LIVE_MODE_REPLY = [
+  "In live mode, lock extension cannot be changed after finalization\.",
+  "",
+  "The sale uses the lock settings configured before finalization\. If you need different lock duration, create a new sale with updated settings\.",
+  "",
+  "🔗 [Lock Tool](https://www.moonsale.app/lock)",
+].join("\n");
+
+const TOKEN_SCANNER_ELIGIBILITY_FAIL_REPLY = [
+  "If Token Scanner shows eligibility failed, a blocking rule was triggered\.",
+  "",
+  "Common causes include existing liquidity pairs, risky token parameters, or restricted contract behavior\. Fix the blocking issue and scan again\.",
+  "",
+  "🔗 [Scanner](https://www.moonsale.app/token-scanner)",
+  "📖 [Dev Reference](https://www.moonsale.app/developer-docs)",
+].join("\n");
+
+const PLATFORM_LINKS = {
+  home: "https://www.moonsale.app",
+  presale: "https://www.moonsale.app/presale",
+  create: "https://www.moonsale.app/create",
+  fairLaunch: "https://www.moonsale.app/create-fair-launch",
+  investorDocs: "https://www.moonsale.app/investor-docs",
+  developerDocs: "https://www.moonsale.app/developer-docs",
+  fees: "https://www.moonsale.app/fees",
+  vesting: "https://www.moonsale.app/vesting",
+  lock: "https://www.moonsale.app/lock",
+  tokenGenerator: "https://www.moonsale.app/create-token",
+  tokenScanner: "https://www.moonsale.app/token-scanner",
+  tokenomics: "https://www.moonsale.app/tokenomics-creator",
+};
+
+const FAILED_SALE_REFUND_PLATFORM_REPLY = [
+  "If a presale fails \(for example, softcap is not reached\), contributors can request refunds from the MoonSale platform sale page using the same wallet\.",
+  "",
+  "Steps:",
+  "1\\) Open [Browse Presales](https://www.moonsale.app/presale)",
+  "2\\) Open the failed or cancelled sale page",
+  "3\\) Connect the contributing wallet and use Refund",
+  "",
+  "📖 [Refund Guide](https://www.moonsale.app/investor-docs)",
+].join("\n");
+
 const RECEIPT_EXTRACTION_ERROR_REPLY = [
   "If you see *Could not extract presale address from receipt*:",
   "",
@@ -366,6 +409,52 @@ function normalizeIncomingQuery(text) {
     .trim();
 }
 
+function isFailedSaleRefundQuery(query) {
+  const q = normalizeLoose(query);
+  if (!q) return false;
+
+  if (/\b(softcap|presale|sale|launch)\b.*\b(fail|fails|failed|not met|not reached|cancelled|canceled)\b/.test(q)) return true;
+  if (/\b(what\s+happens|what\s+if|if)\b.*\b(presale|sale|launch)\b.*\b(fail|fails|failed)\b/.test(q)) return true;
+  if (/\brefund\b.*\b(softcap|failed|cancelled|canceled|sale|presale)\b/.test(q)) return true;
+
+  return false;
+}
+
+function inferPlatformLinkFromText(text) {
+  const q = normalizeLoose(text);
+  if (!q) return PLATFORM_LINKS.home;
+
+  if (/\b(create)\b.*\b(token)\b|\btoken\s+generator\b/.test(q)) return PLATFORM_LINKS.tokenGenerator;
+  if (/\b(token\s*scanner|scanner)\b/.test(q)) return PLATFORM_LINKS.tokenScanner;
+  if (/\btokenomics\b/.test(q)) return PLATFORM_LINKS.tokenomics;
+  if (/\b(fair\s*launch|fairlaunch)\b.*\b(create|start|launch|setup)?\b|\bcreate\b.*\bfair\s*launch\b/.test(q)) return PLATFORM_LINKS.fairLaunch;
+  if (/\b(create|start|setup|launch)\b.*\bpresale\b|\bpresale\b.*\bcreate\b/.test(q)) return PLATFORM_LINKS.create;
+  if (/\b(refund|refunds|failed|fail|fails|softcap|cancelled|canceled|claim)\b/.test(q)) return PLATFORM_LINKS.investorDocs;
+  if (/\b(vesting)\b/.test(q)) return PLATFORM_LINKS.vesting;
+  if (/\b(lock|liquidity)\b/.test(q)) return PLATFORM_LINKS.lock;
+  if (/\b(fee|fees|cost|price)\b/.test(q)) return PLATFORM_LINKS.fees;
+  if (/\b(dev|developer|integration|api|contract)\b/.test(q)) return PLATFORM_LINKS.developerDocs;
+  if (/\b(presale|launch|project|invest)\b/.test(q)) return PLATFORM_LINKS.presale;
+
+  return PLATFORM_LINKS.home;
+}
+
+function platformizeFailedSaleAnswer(answer, query) {
+  if (!isFailedSaleRefundQuery(query)) return String(answer || "");
+
+  let out = String(answer || "");
+  out = out.replace(/directly\s+from\s+the\s+smart\s+contract/gi, "from the MoonSale sale page");
+  out = out.replace(/refund\s+is\s+enforced\s+on-?chain\s+automatically/gi, "refund is available through MoonSale platform flow");
+  out = out.replace(/no\s+admin\s+needed,?\s*no\s+delays/gi, "using the same contributing wallet");
+  return out;
+}
+
+function getGuaranteedLinkTip(query, textSoFar) {
+  if (/https?:\/\//i.test(String(textSoFar || ""))) return "";
+  const url = inferPlatformLinkFromText(query);
+  return `\n\n🔗 [Open Link](${url})`;
+}
+
 function isSmallTalkQuery(query) {
   const q = normalizeLoose(query);
   if (!q) return false;
@@ -379,11 +468,33 @@ function isContextCarryForwardQuery(query) {
   if (isFollowUpLinkRequest(q)) return false;
   if (CONTEXT_CARRY_PREFIX_RE.test(q)) return true;
 
+  if (/\b(can\s+extend\s+in\s+live\s+mode|eligibility\s+fail(?:ed)?|existing\s+liquidity)\b/.test(q)) return true;
+
   const tokens = tokenizeSimple(q);
-  if (tokens.length <= 4 && CONTEXT_CARRY_HINT_RE.test(q)) return true;
+  if (tokens.length <= 6 && CONTEXT_CARRY_HINT_RE.test(q)) return true;
   if (tokens.length <= 3 && /\b(it|that|this|same)\b/.test(q)) return true;
 
   return false;
+}
+
+function isLockExtensionInLiveModeQuery(query) {
+  const q = normalizeLoose(query);
+  if (!q) return false;
+
+  if (/\bcan\s+extend\s+in\s+live\s+mode\b/.test(q) && /\b(lock|liquidity)\b/.test(q)) return true;
+  if (/\b(live\s+mode)\b/.test(q) && /\b(extend|extension)\b/.test(q) && /\b(lock|liquidity)\b/.test(q)) return true;
+
+  return false;
+}
+
+function isTokenScannerEligibilityFailQuery(query) {
+  const q = normalizeLoose(query);
+  if (!q) return false;
+
+  if (!/\btoken\s*scanner\b/.test(q)) return false;
+  if (!/\beligibility\b/.test(q)) return false;
+
+  return /\b(fail|failed|failing|blocked|blocking)\b/.test(q);
 }
 
 function buildContextualizedQuery(query, context) {
@@ -580,7 +691,11 @@ export function isFollowUpLinkRequest(text) {
     /\b(link|url|source|website)\b/.test(q)
     || /^link\??$/.test(q)
     || /^send\s+link\??$/.test(q)
-    || /^source\??$/.test(q);
+    || /^source\??$/.test(q)
+    || /^is\s+there\s+(any\s+)?(a\s+)?(link|url|source)\b.*\??$/.test(q)
+    || /^can\s+i\s+(get|have)\s+(the\s+)?(link|url|source)\b.*\??$/.test(q)
+    || /^give\s+me\s+(the\s+)?(link|url|source)\b.*\??$/.test(q)
+    || /^where\s+is\s+(the\s+)?(link|url|source)\b.*\??$/.test(q);
 
   if (!asksLink) return false;
 
@@ -589,7 +704,11 @@ export function isFollowUpLinkRequest(text) {
     || /^link\??$/.test(q)
     || /^send\s+link\??$/.test(q)
     || /^source\??$/.test(q)
-    || /^link\s+of\s+that(\s+please)?\??$/.test(q);
+    || /^link\s+of\s+that(\s+please)?\??$/.test(q)
+    || /^is\s+there\s+(any\s+)?(a\s+)?(link|url|source)\b.*\??$/.test(q)
+    || /^can\s+i\s+(get|have)\s+(the\s+)?(link|url|source)\b.*\??$/.test(q)
+    || /^give\s+me\s+(the\s+)?(link|url|source)\b.*\??$/.test(q)
+    || /^where\s+is\s+(the\s+)?(link|url|source)\b.*\??$/.test(q);
 
   if (!referencesPrevious) return false;
 
@@ -635,12 +754,15 @@ function rememberChatContext(chatId, query, answer, topResult, effectiveQuery = 
   const topIsProjectLookup = topTags.has("project_lookup");
   const queryLooksProjectToken = /^[a-z0-9_-]{3,20}$/.test(normalizedQuery);
   const useTopTitle = !!topResult?.title && (!topIsProjectLookup || queryLooksProjectToken);
+  const inferredLink = inferPlatformLinkFromText(`${effectiveQuery || query || ""} ${answer || ""}`);
 
   ctx.lastQuery = query;
   ctx.lastEffectiveQuery = effectiveQuery || query;
   ctx.lastTopic = (useTopTitle ? topResult.title : query || "").trim();
   if (uniqueLinks.length > 0) {
     ctx.lastLink = uniqueLinks[0];
+  } else if (inferredLink) {
+    ctx.lastLink = inferredLink;
   }
   ctx.updatedAt = Date.now();
 }
@@ -709,6 +831,11 @@ function getContextualTip(query, answerKind) {
   const isAskingAboutVesting = /\bvesting\b/i.test(q);
   const isAskingAboutLock = /\b(lock|liquidity)\b/i.test(q);
   const isAskingAboutToken = /\b(token|create.*token)\b/i.test(q) && !isAskingAboutCreating;
+  const isAskingAboutRefund = /\b(refund|refunds|money\s*back)\b/i.test(q);
+  const isAskingAboutFailedSale = (
+    /\b(fail|fails|failed|softcap|cancelled|canceled)\b/i.test(q)
+    && /\b(sale|presale|launch)\b/i.test(q)
+  );
   
   if (isAskingAboutCreating && isAskingAboutPresale) {
     return "\n\n💡 Ready to create\\? Go to [moonsale\\.app/create](https://www.moonsale.app/create)";
@@ -727,6 +854,9 @@ function getContextualTip(query, answerKind) {
   }
   if (isAskingAboutToken) {
     return "\n\n💡 Create tokens with the [Token Generator](https://www.moonsale.app/create-token)";
+  }
+  if (isAskingAboutRefund || isAskingAboutFailedSale) {
+    return "\n\n💡 Refund flow details: [Investor Docs](https://www.moonsale.app/investor-docs)\n🔗 [Sale Page](https://www.moonsale.app/presale)";
   }
   
   return "";
@@ -827,6 +957,14 @@ export function buildAssistantReply(chatId, query, options = {}) {
     return respond("fair_launch_create_guide", CREATE_FAIR_LAUNCH_GUIDE_REPLY);
   }
 
+  if (isLockExtensionInLiveModeQuery(effectiveQuery)) {
+    return respond("lock_live_mode_extension", LOCK_EXTENSION_LIVE_MODE_REPLY);
+  }
+
+  if (isTokenScannerEligibilityFailQuery(effectiveQuery)) {
+    return respond("token_scanner_eligibility", TOKEN_SCANNER_ELIGIBILITY_FAIL_REPLY);
+  }
+
   if (isOffTopic(q)) {
     return respond("offtopic", OFF_TOPIC_REPLY);
   }
@@ -839,9 +977,27 @@ export function buildAssistantReply(chatId, query, options = {}) {
     return respond("overview", MOONSALE_OVERVIEW_REPLY);
   }
 
-  if (isFollowUpLinkRequest(q) && hasFreshContext && context.lastLink) {
+  if (isFailedSaleRefundQuery(q)) {
+    rememberChatContext(
+      chatId,
+      q,
+      FAILED_SALE_REFUND_PLATFORM_REPLY,
+      { title: "Failed sale refund flow", source: PLATFORM_LINKS.investorDocs },
+      effectiveQuery
+    );
+    return respond("failed_sale_refund", FAILED_SALE_REFUND_PLATFORM_REPLY);
+  }
+
+  if (isFollowUpLinkRequest(q) && hasFreshContext) {
+    const contextLink = context.lastLink || inferPlatformLinkFromText(
+      `${context.lastEffectiveQuery || ""} ${context.lastTopic || ""} ${context.lastQuery || ""}`
+    );
+    if (!contextLink) {
+      return respond("fallback", FALLBACK);
+    }
+
     const topicText = context.lastTopic ? ` (${context.lastTopic})` : "";
-    const raw = `Here is the exact link from your previous topic${topicText}:\n📄 Source: ${context.lastLink}`;
+    const raw = `Here is the exact link from your previous topic${topicText}:\n📄 Source: ${contextLink}`;
     const tone = detectTone(q);
     return respond("followup", formatAnswer(styleAnswer(raw, tone)));
   }
@@ -873,9 +1029,10 @@ export function buildAssistantReply(chatId, query, options = {}) {
 
   const engine = getEngine();
   const raw = engine.answer(effectiveQuery);
+  const tunedRaw = platformizeFailedSaleAnswer(raw, effectiveQuery);
 
   // Final safety net: never expose specific listing details directly.
-  const leaksSpecificListing = /\bis listed on moonsale as\b|\bcurrent status:\b|\bofficial listing:\b/i.test(raw);
+  const leaksSpecificListing = /\bis listed on moonsale as\b|\bcurrent status:\b|\bofficial listing:\b/i.test(tunedRaw);
   if (leaksSpecificListing) {
     rememberChatContext(
       chatId,
@@ -886,18 +1043,21 @@ export function buildAssistantReply(chatId, query, options = {}) {
     return respond("presale_guard", SPECIFIC_PRESALE_REPLY);
   }
 
-  if (raw.includes("don't have specific info")) {
+  if (tunedRaw.includes("don't have specific info")) {
     return respond("fallback", FALLBACK);
   }
 
-  rememberChatContext(chatId, q, raw, null, effectiveQuery);
-
   const tone = detectTone(q);
-  const styled = styleAnswer(raw, tone);
+  const styled = styleAnswer(tunedRaw, tone);
   const formattedText = formatAnswer(styled);
   const tip = getContextualTip(effectiveQuery, "answer");
-  
-  return respond("answer", formattedText + tip);
+  const baseOutput = formattedText + tip;
+  const guaranteedLinkTip = getGuaranteedLinkTip(effectiveQuery, baseOutput);
+  const finalOutput = baseOutput + guaranteedLinkTip;
+
+  rememberChatContext(chatId, q, tunedRaw + tip + guaranteedLinkTip, null, effectiveQuery);
+
+  return respond("answer", finalOutput);
 }
 
 export function resolveCommandText(command, options = {}) {
