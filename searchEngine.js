@@ -31,11 +31,20 @@ const QUERY_NORMALIZATION_RULES = [
   [/\bassistent\b|\bassitstant\b|\bassistent\b/gi, "assistant"],
   [/\bmoonsale\s+app\b/gi, "moonsale"],
   [/\bmoon\s+sale\b/gi, "moonsale"],
+  [/\bfairlaunch\b/gi, "fair launch"],
   [/\bpinksale\b/gi, "pinksale"],
   [/\bcntract\b|\bconract\b/gi, "contract"],
   [/\bwhtepaper\b|\bwhitepapr\b/gi, "whitepaper"],
   [/\bpresell\b|\bpre sale\b/gi, "presale"],
+  [/\bhwo\b/gi, "how"],
+  [/\bliquidty\b|\bliqudity\b|\bliqidity\b/gi, "liquidity"],
   [/\bwht\b/gi, "what"],
+  [/\bwat\b/gi, "what"],
+  [/\bthi\b|\bdis\b/gi, "this"],
+  [/\bgrp\b|\bgrup\b/gi, "group"],
+  [/\bchanel\b/gi, "channel"],
+  [/\babt\b/gi, "about"],
+  [/\bhow\s+r\s+u\b/gi, "how are you"],
   [/\bplz\b|\bpls\b/gi, "please"],
   [/\bur\b/gi, "your"],
   [/\bu\b/gi, "you"],
@@ -44,6 +53,7 @@ const QUERY_NORMALIZATION_RULES = [
 
 function normalizeUserQuery(text) {
   let out = String(text || "").toLowerCase();
+  out = out.replace(/@[a-z0-9_]+/g, " ");
   for (const [pattern, replacement] of QUERY_NORMALIZATION_RULES) {
     out = out.replace(pattern, replacement);
   }
@@ -512,7 +522,40 @@ export class SearchEngine {
   answer(query) {
     const normal = normalizeUserQuery(query);
 
+    const isGroupAboutIntent =
+      /\b(this\s+)?(group|chat|channel|community)\b/.test(normal)
+      && /\b(about|info|purpose|topic)\b/.test(normal)
+      || /^(group|chat|channel|community)\s+(about|info)/.test(normal)
+      || /^(this\s+)?(group|chat|channel)\??$/.test(normal);
+
+    if (isGroupAboutIntent) {
+      return (
+        "This group is for MoonSale community support and launch guidance.\n\n" +
+        "Ask me about presale creation, fair launch setup, token generation, vesting, lock, fees, refunds, and audits.\n\n" +
+        "Main links:\n" +
+        "• https://moonsale.app\n" +
+        "• https://moonsale.app/create\n" +
+        "• https://moonsale.app/create-fair-launch"
+      );
+    }
+
     const directRules = [
+      {
+        pattern: /^how\s+are\s+you\??$|^how\s+are\s+you\s+doing\??$/,
+        answer: "I'm doing great and ready to help with MoonSale. Ask me anything about presales, fair launches, token tools, fees, refunds, or security.",
+      },
+      {
+        pattern: /\bhow\s+do\s+i\s+create\s+fair\s*launch\b|\bcreate\s+fair\s*launch\b|\bfair\s*launch\s+kaise\s+(banau|banao|banaye|create)\b|\b(gimana|cara)\b.*\b(bikin|buat|create)\b.*\bfair\s*launch\b/,
+        answer: "Create a fair launch at https://moonsale.app/create-fair-launch. Connect wallet, set token pool and softcap, set min and max buy plus timeline, deploy, then complete listing fee to publish.",
+      },
+      {
+        pattern: /\bhow\s+do\s+i\s+create\s+token\b|\bhwo\s+to\s+create\s+token\b|\bcreate\s+token\b|\btoken\s+generator\b|\btoken\s+kaise\s+(banau|banao|banaye|create)\b|\b(gimana|cara)\b.*\b(bikin|buat|create)\b.*\btoken\b/,
+        answer: "Create token at https://moonsale.app/create-token. Set name, symbol, supply, and decimals, deploy from wallet, then create presale at https://moonsale.app/create if needed.",
+      },
+      {
+        pattern: /could\s+not\s+extract\s+presale\s+address\s+from\s+receipt|extract\s+presale\s+address\s+from\s+receipt/,
+        answer: "This error usually means deploy transaction parsing failed. Check both wallet confirmations were completed, wait for final tx confirmation, open explorer logs to verify presale creation event, then refresh My Launches. If still failing, share tx hash, token address, and wallet with support.",
+      },
       {
         pattern: /^what\s+is\s+moonsale\??$|^moonsale\??$|^tell\s+me\s+about\s+moonsale\??$/,
         answer: "MoonSale is a permissionless launchpad for BNB Chain and Ethereum where projects run presales or fair launches with on-chain refunds, automatic liquidity locking, and audited smart-contract protections.",

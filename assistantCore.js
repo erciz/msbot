@@ -176,6 +176,16 @@ const TONE_CASUAL_PATTERNS = [
   /\btldr\b/i,
 ];
 
+const SMALL_TALK_PATTERNS = [
+  /^how\s*(are|r)\s*you\??$/i,
+  /^how\s*(are|r)\s*(you|u)\??$/i,
+  /^how\s*ru\??$/i,
+  /^kya\s+haal\s+hai\??$/i,
+  /^kaise\s+ho\??$/i,
+  /^gimana\s+kabar\??$/i,
+  /^apa\s+kabar\??$/i,
+];
+
 
 
 const PROJECT_TERM_STOPWORDS = new Set([
@@ -239,6 +249,49 @@ const MOONSALE_OVERVIEW_REPLY = [
   "🔗 Start here: [moonsale\\.app](https://moonsale.app)",
 ].join("\n");
 
+const SMALL_TALK_REPLY = [
+  "I'm doing great and ready to help with MoonSale\\!",
+  "",
+  "Ask me anything about:",
+  "• Creating a presale",
+  "• Creating a fair launch",
+  "• Token generator",
+  "• Vesting, lock, and fees",
+].join("\n");
+
+const CREATE_FAIR_LAUNCH_GUIDE_REPLY = [
+  "To create a fair launch:",
+  "",
+  "1\\) Open [moonsale\\.app/create\\-fair\\-launch](https://www.moonsale.app/create-fair-launch)",
+  "2\\) Connect wallet and select token",
+  "3\\) Set token pool, softcap, min\\/max buy, liquidity, and timeline",
+  "4\\) Deploy contract and pay listing fee",
+  "5\\) Share listing and finalize after sale end",
+].join("\n");
+
+const CREATE_TOKEN_GUIDE_REPLY = [
+  "To create a token on MoonSale:",
+  "",
+  "1\\) Open [moonsale\\.app/create\\-token](https://www.moonsale.app/create-token)",
+  "2\\) Set token name, symbol, supply, and decimals",
+  "3\\) Deploy token contract from your wallet",
+  "4\\) Then create a presale at [moonsale\\.app/create](https://www.moonsale.app/create)",
+].join("\n");
+
+const RECEIPT_EXTRACTION_ERROR_REPLY = [
+  "If you see *Could not extract presale address from receipt*:",
+  "",
+  "1\\) Ensure both wallet confirmations were completed",
+  "2\\) Wait for final transaction confirmation on chain",
+  "3\\) Check explorer logs for presale creation event",
+  "4\\) Refresh My Launches and try again",
+  "5\\) If still missing, share tx hash + token address with support",
+  "",
+  "Helpful pages:",
+  "• [Create Presale](https://www.moonsale.app/create)",
+  "• [Developer Docs](https://www.moonsale.app/developer-docs)",
+].join("\n");
+
 const CHAT_CONTEXT = new Map();
 const MAX_CHAT_CONTEXTS = 2000;
 const FOLLOW_UP_CONTEXT_TTL_MS = 30 * 60 * 1000;
@@ -272,6 +325,54 @@ function normalizeLoose(text) {
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function normalizeIncomingQuery(text) {
+  return String(text || "")
+    .replace(/@[a-zA-Z0-9_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isSmallTalkQuery(query) {
+  const q = normalizeLoose(query);
+  if (!q) return false;
+  return SMALL_TALK_PATTERNS.some(p => p.test(q));
+}
+
+function isCreateFairLaunchQuery(query) {
+  const q = normalizeLoose(query);
+  if (!q) return false;
+
+  if (/\bhow\s+do\s+i\s+create\s+fair\s*launch\b/.test(q)) return true;
+  if (/\bcreate\s+fair\s*launch\b/.test(q)) return true;
+  if (/\bfair\s*launch\s+kaise\s+(banau|banao|banaye|create)\b/.test(q)) return true;
+  if (/\b(gimana|cara)\b.*\b(bikin|buat|create)\b.*\bfair\s*launch\b/.test(q)) return true;
+
+  return false;
+}
+
+function isCreateTokenQuery(query) {
+  const q = normalizeLoose(query);
+  if (!q) return false;
+
+  if (/\bhwo\s+to\s+create\s+token\b/.test(q)) return true;
+  if (/\bhow\s+do\s+i\s+create\s+token\b/.test(q)) return true;
+  if (/\bcreate\s+token\b/.test(q)) return true;
+  if (/\btoken\s+generator\b/.test(q)) return true;
+  if (/\btoken\s+kaise\s+(banau|banao|banaye|create)\b/.test(q)) return true;
+  if (/\b(gimana|cara)\b.*\b(bikin|buat|create)\b.*\btoken\b/.test(q)) return true;
+
+  return false;
+}
+
+function isReceiptExtractionErrorQuery(query) {
+  const q = normalizeLoose(query);
+  if (!q) return false;
+
+  return /could\s+not\s+extract\s+presale\s+address\s+from\s+receipt/.test(q)
+    || /extract\s+presale\s+address/.test(q)
+    || /presale\s+address\s+from\s+receipt/.test(q);
 }
 
 function isGroupAboutQuery(query) {
@@ -594,14 +695,37 @@ export function formatAnswer(text) {
 }
 
 export function buildAssistantReply(chatId, query) {
-  const q = String(query || "").trim();
+  const q = normalizeIncomingQuery(query);
   const context = getChatContext(chatId);
+
+  if (!q) {
+    return {
+      kind: "greeting",
+      text: sanitizeReplyText(escape(getRandomGreeting())),
+    };
+  }
 
   if (isGreeting(q)) {
     return {
       kind: "greeting",
       text: sanitizeReplyText(escape(getRandomGreeting())),
     };
+  }
+
+  if (isSmallTalkQuery(q)) {
+    return { kind: "smalltalk", text: sanitizeReplyText(escape(SMALL_TALK_REPLY)) };
+  }
+
+  if (isReceiptExtractionErrorQuery(q)) {
+    return { kind: "deploy_troubleshoot", text: sanitizeReplyText(escape(RECEIPT_EXTRACTION_ERROR_REPLY)) };
+  }
+
+  if (isCreateTokenQuery(q)) {
+    return { kind: "token_create_guide", text: sanitizeReplyText(escape(CREATE_TOKEN_GUIDE_REPLY)) };
+  }
+
+  if (isCreateFairLaunchQuery(q)) {
+    return { kind: "fair_launch_create_guide", text: sanitizeReplyText(escape(CREATE_FAIR_LAUNCH_GUIDE_REPLY)) };
   }
 
   if (isOffTopic(q)) {

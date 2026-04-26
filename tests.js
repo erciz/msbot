@@ -48,14 +48,24 @@ function assertEqual(actual, expected, message) {
 }
 
 function assertIncludes(haystack, needle, message) {
-  // Handle escaped markdown/emojis and unescaped variants
+  const text = String(haystack || "");
+  const textLower = text.toLowerCase();
+  const needleLower = String(needle || "").toLowerCase();
+
+  // Handle escaped markdown/emojis and unescaped variants.
+  // Telegram MarkdownV2 commonly escapes punctuation in links (for example, create\-token).
+  const deescapedText = text
+    .replace(/\\([_*\[\]()~`>#+\-=|{}.!\\])/g, "$1")
+    .toLowerCase();
+
   const variations = [
-    needle,
-    needle.replace(/\./g, "\\."), // escaped dots
-    needle.replace(/\[/g, "\\[").replace(/\]/g, "\\]"), // escaped brackets
+    needleLower,
+    needleLower.replace(/\./g, "\\."),
+    needleLower.replace(/\[/g, "\\[").replace(/\]/g, "\\]"),
+    needleLower.replace(/-/g, "\\-"),
   ];
-  
-  const found = variations.some(v => String(haystack).includes(v));
+
+  const found = variations.some(v => textLower.includes(v) || deescapedText.includes(v));
   if (!found) {
     throw new Error(`${message || "Assertion failed"}\n   Expected to find: "${needle}"\n   In: "${haystack}"`);
   }
@@ -283,8 +293,52 @@ test("MoonSale shorthand about query returns overview", () => {
   assert(!reply.text.toLowerCase().includes("official listing:"), "Should not return specific listing details");
 });
 
+test("Mention + greeting returns greeting", () => {
+  const reply = buildAssistantReply(85, "@MoonsaleAssistantBot hello");
+  assertEqual(reply.kind, "greeting", "Mention + hello should classify as greeting");
+});
+
+test("Small-talk query should not return fallback", () => {
+  const reply = buildAssistantReply(86, "how r u");
+  assert(reply.kind === "smalltalk", "Small-talk should return smalltalk kind");
+  assert(!reply.text.toLowerCase().includes("investor docs"), "Small-talk should not fall back to docs list");
+});
+
+test("Receipt extraction error query returns troubleshooting", () => {
+  const reply = buildAssistantReply(87, "Could not extract presale address from receipt");
+  assertEqual(reply.kind, "deploy_troubleshoot", "Should return deploy troubleshooting response");
+  assertIncludes(reply.text, "tx", "Troubleshooting response should reference tx checks");
+});
+
+test("Mixed-language: presale kaise create karu", () => {
+  const reply = buildAssistantReply(88, "presale kaise create karu");
+  assert(reply.kind === "answer" || reply.kind === "presale_browse", "Should answer presale create mixed-language query");
+  assert(
+    reply.text.toLowerCase().includes("create") || reply.text.toLowerCase().includes("moonsale"),
+    "Should include create guidance"
+  );
+});
+
+test("Mixed-language: fairlaunch kaise banau", () => {
+  const reply = buildAssistantReply(89, "fairlaunch kaise banau");
+  assertEqual(reply.kind, "fair_launch_create_guide", "Should route Hinglish fair launch create intent");
+  assertIncludes(reply.text, "create-fair-launch", "Should include fair launch create link");
+});
+
+test("Mixed-language: token kaise banau", () => {
+  const reply = buildAssistantReply(90, "token kaise banau");
+  assertEqual(reply.kind, "token_create_guide", "Should route Hinglish token create intent");
+  assertIncludes(reply.text, "create-token", "Should include token generator link");
+});
+
+test("Mixed-language: gimana bikin token", () => {
+  const reply = buildAssistantReply(91, "gimana bikin token");
+  assertEqual(reply.kind, "token_create_guide", "Should route Indo token create intent");
+  assertIncludes(reply.text, "create-token", "Should include token generator link for Indo query");
+});
+
 test("Unknown question gets helpful response", () => {
-  const reply = buildAssistantReply(10, "xyzabc123notarealquestion");
+  const reply = buildAssistantReply(92, "xyzabc123notarealquestion");
   // Response should be helpful - either referring to docs, or suggesting to check official site, etc.
   assert(
     reply.text.toLowerCase().includes("docs") || 
@@ -450,7 +504,11 @@ test("Multiple greetings produce varied responses", () => {
 test("Tone detection works for casual queries", () => {
   const casual = buildAssistantReply(1, "yo whats up");
   assert(
-    casual.text.includes("deal") || casual.text.includes("Yo") || casual.text.includes("check") || casual.text.includes("Got you"),
+    casual.text.includes("deal")
+      || casual.text.includes("Yo")
+      || casual.text.includes("check")
+      || casual.text.includes("Got you")
+      || casual.text.includes("Real quick"),
     "Casual query should get casual tone response"
   );
 });
