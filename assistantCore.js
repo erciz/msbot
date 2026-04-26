@@ -191,6 +191,26 @@ const RESERVED_GENERIC_SINGLE_TERMS = new Set([
   "wallet", "metamask", "support", "help", "docs", "whitepaper", "link",
 ]);
 
+const GENERIC_PRESALE_BROWSE_RESPONSE = `
+🚀 *Browse Live Presales on MoonSale*
+
+Instead of listing specific projects, I'm pointing you to the official marketplace where you can explore all presales yourself:
+
+👉 [Browse All Presales](https://www.moonsale.app/presale) — Live & upcoming launches
+👉 [Browse Fair Launches](https://www.moonsale.app) — No fixed price launches
+
+*What you'll find there:*
+✅ Real-time status (live, upcoming, ended)
+✅ Hard & soft caps for each project
+✅ Team info & audit status
+✅ Community links & tokenomics
+✅ One-click investment interface
+
+💡 *Pro tip:* Always DYOR before investing. Check audits, team credentials, and community sentiment!
+
+🔍 *Want specific presale info?* Give me a project name and I'll help you find details!
+`.trim();
+
 const CHAT_CONTEXT = new Map();
 const MAX_CHAT_CONTEXTS = 2000;
 const FOLLOW_UP_CONTEXT_TTL_MS = 30 * 60 * 1000;
@@ -263,6 +283,11 @@ function isSpecificPresaleQuery(query, topResult) {
   if (/^what\s+is\s+moonsale\??$|^tell\s+me\s+about\s+moonsale\??$/.test(q)) {
     return false;
   }
+
+  // Don't treat generic presale/launch terms as specific queries
+  // These should go to browse page instead
+  const isGenericBrowseQuery = /^(launch|presale|fair\s*launch?|fair|browse|show|list)$/i.test(q);
+  if (isGenericBrowseQuery) return false;
 
   const terms = getProjectLookupTerms();
   const hasProjectToken = queryTokens.some(t => terms.has(t));
@@ -474,6 +499,18 @@ export function buildAssistantReply(chatId, query) {
 
   const engine = getEngine();
   const topResult = engine.search(q, 1)[0];
+
+  // Check for generic presale/launch browse queries
+  const isGenericBrowseQuery = /^(launch|presale|fair\s*launch?|fair|browse|show|list)$/i.test(q);
+  if (isGenericBrowseQuery) {
+    rememberChatContext(
+      chatId,
+      q,
+      GENERIC_PRESALE_BROWSE_RESPONSE,
+      { title: "Browse presales", source: "https://moonsale.app/presale" }
+    );
+    return { kind: "presale_browse", text: formatAnswer(GENERIC_PRESALE_BROWSE_RESPONSE) };
+  }
 
   if (isSpecificPresaleQuery(q, topResult)) {
     rememberChatContext(
