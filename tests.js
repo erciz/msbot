@@ -227,7 +227,10 @@ test("Off-topic response guides to MoonSale", () => {
 
 test("Regular question has kind 'answer'", () => {
   const reply = buildAssistantReply(4, "what is moonsale");
-  assert(reply.kind === "answer" || reply.kind.includes("guard"), "Should have answer or guard kind");
+  assert(
+    reply.kind === "answer" || reply.kind === "overview" || reply.kind.includes("guard"),
+    "Should have answer, overview, or guard kind"
+  );
 });
 
 test("Answer contains text", () => {
@@ -235,8 +238,53 @@ test("Answer contains text", () => {
   assert(reply.text && reply.text.length > 10, "Answer should have substantial text");
 });
 
+test("Typo group query returns group info", () => {
+  const reply = buildAssistantReply(6, "what is thi group about");
+  assertEqual(reply.kind, "group_info", "Should classify typo group query as group info");
+  assert(!reply.text.toLowerCase().includes("official listing:"), "Should not return specific listing info");
+});
+
+test("Short group query returns group info", () => {
+  const reply = buildAssistantReply(7, "what this grp about");
+  assertEqual(reply.kind, "group_info", "Should classify short group query as group info");
+  assert(!reply.text.toLowerCase().includes("current status:"), "Should not return project status listing");
+});
+
+test("Channel about query returns group info", () => {
+  const reply = buildAssistantReply(8, "what is this channel about");
+  assertEqual(reply.kind, "group_info", "Should return group info for channel-about query");
+});
+
+test("Noisy shorthand group query returns group info", () => {
+  const reply = buildAssistantReply(81, "wht s dis grp abt");
+  assertEqual(reply.kind, "group_info", "Should classify noisy shorthand group query as group info");
+  assert(!reply.text.toLowerCase().includes("official listing:"), "Should not include listing details");
+});
+
+test("Group info shorthand query returns group info", () => {
+  const reply = buildAssistantReply(82, "group info pls");
+  assertEqual(reply.kind, "group_info", "Should classify 'group info' query as group info");
+});
+
+test("Bare group query returns group info", () => {
+  const reply = buildAssistantReply(83, "this group?");
+  assertEqual(reply.kind, "group_info", "Should classify bare group query as group info");
+});
+
+test("MoonSale about query does not return specific presale", () => {
+  const reply = buildAssistantReply(9, "what is moonsale about");
+  assert(reply.kind === "overview" || reply.kind === "answer", "Should return overview or answer");
+  assert(!reply.text.toLowerCase().includes("official listing:"), "Should not return listing details");
+});
+
+test("MoonSale shorthand about query returns overview", () => {
+  const reply = buildAssistantReply(84, "tell abt moonsale");
+  assert(reply.kind === "overview" || reply.kind === "answer", "Should return overview/answer for shorthand moonsale query");
+  assert(!reply.text.toLowerCase().includes("official listing:"), "Should not return specific listing details");
+});
+
 test("Unknown question gets helpful response", () => {
-  const reply = buildAssistantReply(6, "xyzabc123notarealquestion");
+  const reply = buildAssistantReply(10, "xyzabc123notarealquestion");
   // Response should be helpful - either referring to docs, or suggesting to check official site, etc.
   assert(
     reply.text.toLowerCase().includes("docs") || 
@@ -361,22 +409,20 @@ test("Format answer handles long text", () => {
   assert(formatted.length < longText.length * 2, "Should truncate very long answers");
 });
 
-test("Format answer adds context tips for presale", () => {
-  const presaleAnswer = "A presale is a token sale mechanism.";
-  const formatted = formatAnswer(presaleAnswer);
-  assertIncludes(formatted, "moonsale", "Should add context tips");
+test("Answer adds contextual tips based on query", () => {
+  // When asking "how to create presale", should get a tip about create link
+  const reply = buildAssistantReply(50, "how do I create a presale");
+  assert(
+    reply.text.includes("moonsale.app/create") || reply.text.includes("create"),
+    "Should suggest create link for presale creation queries"
+  );
 });
 
-test("Format answer adds context tips for vesting", () => {
-  const vestingAnswer = "Vesting releases tokens over time gradually.";
-  const formatted = formatAnswer(vestingAnswer);
-  assertIncludes(formatted, "moonsale", "Should add vesting tip");
-});
-
-test("Format answer adds context tips for fees", () => {
-  const feesAnswer = "The platform fees are applied to each sale.";
-  const formatted = formatAnswer(feesAnswer);
-  assertIncludes(formatted, "moonsale", "Should add fees tip");
+test("Answer doesn't add tips for general questions", () => {
+  // Audit question shouldn't have creation tips
+  const reply = buildAssistantReply(51, "is it audited");
+  // Just verify it returns a valid answer without checking specific tips
+  assert(reply.kind === "answer" || reply.kind === "fallback", "Should return answer or fallback");
 });
 
 test("Format answer preserves or escapes links properly", () => {

@@ -95,11 +95,11 @@ export const FALLBACK = `
 Hmm, that one's got me scratching my circuits\\! 🤖 But no worries\\!
 
 *Try these:*
-📝 Rephrase your question — maybe I'll catch it\\!
-📖 [Investor Docs](https://www.moonsale.app/investor-docs) — The ultimate guide
-👨\\-💻 [Developer Docs](https://www.moonsale.app/developer-docs) — For the code\\-heads
-🚀 [Browse Presales](https://www.moonsale.app/presale) — See live projects
-🏠 [Visit moonsale\\.app](https://moonsale.app) — Home base
+📝 Rephrase your question — maybe I'll catch it
+📖 [Investor Docs](https://www.moonsale.app/investor-docs)
+👨\\-💻 [Developer Docs](https://www.moonsale.app/developer-docs)
+🚀 [Browse Presales](https://www.moonsale.app/presale)
+🏠 [Visit moonsale\\.app](https://moonsale.app)
 
 Or just ask me differently — I learn as we chat\\! 💬
 `.trim();
@@ -112,7 +112,7 @@ export const OFF_TOPIC_REPLY =
 const SPECIFIC_PRESALE_REPLY = [
   "🔍 Looking for a specific presale\\? You got it\\!",
   "",
-  "I don't have details about individual projects in my brain — but MoonSale's platform does\\!",
+  "I don't have details about individual projects in my brain, but MoonSale's platform does\\!",
   "",
   "👉 [Browse all presales on moonsale\\.app/presale](https://moonsale.app/presale)",
   "",
@@ -185,6 +185,13 @@ const PROJECT_TERM_STOPWORDS = new Set([
   "tokens", "app", "www", "https", "http", "details", "detail",
 ]);
 
+const GENERIC_QUERY_STOPWORDS = new Set([
+  "what", "is", "this", "thi", "that", "about", "tell", "me", "please",
+  "can", "you", "i", "it", "we", "do", "how", "why", "when", "where",
+  "which", "who", "are", "am", "to", "for", "of", "on", "in", "a", "an",
+  "the", "group", "grp", "chat", "channel", "chanel", "community", "purpose", "topic",
+]);
+
 const RESERVED_GENERIC_SINGLE_TERMS = new Set([
   "moonsale", "presale", "fairlaunch", "fair", "launch", "tokenomics",
   "fees", "refund", "refunds", "liquidity", "vesting", "audit", "kyc",
@@ -211,6 +218,27 @@ Instead of listing specific projects, I'm pointing you to the official marketpla
 🔍 *Want specific presale info?* Give me a project name and I'll help you find details!
 `.trim();
 
+const GROUP_INFO_REPLY = [
+  "Welcome\\! 👋 This group is for the *MoonSale Community*\\.",
+  "",
+  "🚀 *What is MoonSale\\?*",
+  "MoonSale is a launchpad for presales, fair launches, token lock, vesting, and token tools\\.",
+  "",
+  "*Quick links:*",
+  "🏠 [moonsale\\.app](https://moonsale.app)",
+  "📖 [Investor Docs](https://www.moonsale.app/investor-docs)",
+  "",
+  "Ask me anything about MoonSale features and I will help\\! 💬",
+].join("\n");
+
+const MOONSALE_OVERVIEW_REPLY = [
+  "MoonSale is a crypto launchpad for presales and fair launches\\.",
+  "",
+  "It also includes token lock, token vesting, token generator, token scanner, and KYC\\/audit resources\\.",
+  "",
+  "🔗 Start here: [moonsale\\.app](https://moonsale.app)",
+].join("\n");
+
 const CHAT_CONTEXT = new Map();
 const MAX_CHAT_CONTEXTS = 2000;
 const FOLLOW_UP_CONTEXT_TTL_MS = 30 * 60 * 1000;
@@ -236,6 +264,63 @@ function tokenizeSimple(text) {
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
     .filter(Boolean);
+}
+
+function normalizeLoose(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isGroupAboutQuery(query) {
+  const q = normalizeLoose(query);
+  if (!q) return false;
+
+  if (/^(group|grp|chat|channel|chanel|community)\s+about\??$/.test(q)) return true;
+  if (/^(this|thi|dis)?\s*(group|grp|chat|channel|chanel|community)\??$/.test(q)) return true;
+  if (/^(group|grp|chat|channel|chanel|community)\s+info\b/.test(q)) return true;
+  if (/^tell\s+me\s+about\s+(this\s+)?(group|grp|chat|channel|chanel|community)\??$/.test(q)) return true;
+  if (/^what\s+(is\s+)?(this|thi|dis)?\s*(group|grp|chat|channel|chanel|community)\s+about\??$/.test(q)) return true;
+  if (/^(what|wht|wat|whats|wats)\s+(is\s+)?(this|thi|dis)?\s*(group|grp|chat|channel|chanel|community)\??$/.test(q)) return true;
+  if (/^what\s+(is\s+)?this\s+about\??$/.test(q)) return true;
+
+  const tokens = q.split(" ");
+  const hasGroupWord = tokens.some(t => ["group", "grp", "chat", "channel", "chanel", "community"].includes(t));
+  const hasAboutWord = tokens.some(t => ["about", "purpose", "topic", "abt"].includes(t));
+  const hasQuestionCue = tokens.some(t => [
+    "what", "wht", "wat", "whats", "wats", "this", "thi", "dis",
+    "about", "abt", "info", "purpose", "topic", "intro", "pls", "please",
+  ].includes(t));
+
+  if (hasGroupWord && hasQuestionCue && tokens.length <= 6) return true;
+
+  return hasGroupWord && hasAboutWord;
+}
+
+function isMoonSaleOverviewQuery(query) {
+  const q = normalizeLoose(query);
+  if (!q) return false;
+
+  if (
+    /^what\s+is\s+moonsale(\s+about)?\??$/.test(q)
+    || /^tell\s+me\s+about\s+moonsale\??$/.test(q)
+    || /^what\s+is\s+moon\s+sale(\s+about)?\??$/.test(q)
+  ) {
+    return true;
+  }
+
+  const tokens = q.split(" ");
+  const hasMoonSale = tokens.includes("moonsale") || (tokens.includes("moon") && tokens.includes("sale"));
+  const hasOverviewCue = tokens.some(t => [
+    "about", "abt", "info", "intro", "overview", "what", "tell", "pls", "please",
+  ].includes(t));
+
+  if (hasMoonSale && hasOverviewCue) return true;
+  if (hasMoonSale && tokens.length <= 2) return true;
+
+  return false;
 }
 
 function getProjectLookupTerms() {
@@ -289,8 +374,20 @@ function isSpecificPresaleQuery(query, topResult) {
   const isGenericBrowseQuery = /^(launch|presale|fair\s*launch?|fair|browse|show|list)$/i.test(q);
   if (isGenericBrowseQuery) return false;
 
+  // Don't match queries that are clearly community/about context.
+  if (isGroupAboutQuery(query)) return false;
+  if (isMoonSaleOverviewQuery(query)) return false;
+
   const terms = getProjectLookupTerms();
-  const hasProjectToken = queryTokens.some(t => terms.has(t));
+  const meaningfulTokens = queryTokens.filter(t => (
+    t.length >= 3
+    && !PROJECT_TERM_STOPWORDS.has(t)
+    && !RESERVED_GENERIC_SINGLE_TERMS.has(t)
+    && !GENERIC_QUERY_STOPWORDS.has(t)
+  ));
+  if (!meaningfulTokens.length) return false;
+
+  const hasProjectToken = meaningfulTokens.some(t => terms.has(t));
   const topIsProjectLookup = !!topResult && Array.isArray(topResult.tags) && topResult.tags.includes("project_lookup");
 
   const singleToken = queryTokens.length === 1;
@@ -411,6 +508,10 @@ function styleAnswer(answer, tone) {
   }
 }
 
+function sanitizeReplyText(text) {
+  return String(text || "").replace(/[—–]/g, ",");
+}
+
 const GREETING_RESPONSES = [
   "Hey\\! 👋 I'm the MoonSale Assistant\\. Ask me anything about the platform\\!\\n\\nTry: What is MoonSale\\? or How do I create a presale\\?",
   "Yo\\! 🌙 MoonSale Assistant here\\. Ready to talk presales, fair launches, vesting, fees — you name it\\!",
@@ -419,8 +520,45 @@ const GREETING_RESPONSES = [
   "Hola\\! 👋 MoonSale Assistant at your service\\. What's on your mind\\?",
 ];
 
-function getRandomGreeting() {
+export function getRandomGreeting() {
   return GREETING_RESPONSES[Math.floor(Math.random() * GREETING_RESPONSES.length)];
+}
+
+function getContextualTip(query, answerKind) {
+  const q = String(query || "").toLowerCase();
+  
+  // Only add tips for answer/presale_guard responses, not greetings, off-topic, etc.
+  if (!["answer", "presale_guard"].includes(answerKind)) return "";
+  
+  // Check what the user is asking about to determine relevant tip
+  const isAskingAboutCreating = /\b(create|how\s+to\s+make|how\s+do\s+i|start|launch)\b/.test(q);
+  const isAskingAboutPresale = /\bpresale\b/i.test(q);
+  const isAskingAboutFairLaunch = /\b(fair\s*launch|fairaunch)\b/i.test(q);
+  const isAskingAboutFees = /\b(fee|cost|price)\b/i.test(q);
+  const isAskingAboutVesting = /\bvesting\b/i.test(q);
+  const isAskingAboutLock = /\b(lock|liquidity)\b/i.test(q);
+  const isAskingAboutToken = /\b(token|create.*token)\b/i.test(q) && !isAskingAboutCreating;
+  
+  if (isAskingAboutCreating && isAskingAboutPresale) {
+    return "\n\n💡 Ready to create\\? Go to [moonsale\\.app/create](https://www.moonsale.app/create)";
+  }
+  if (isAskingAboutCreating && isAskingAboutFairLaunch) {
+    return "\n\n💡 Ready to launch\\? Check [moonsale\\.app/create\\-fair\\-launch](https://www.moonsale.app/create-fair-launch)";
+  }
+  if (isAskingAboutFees) {
+    return "\n\n💡 See the full [fee breakdown](https://www.moonsale.app/fees)";
+  }
+  if (isAskingAboutVesting) {
+    return "\n\n💡 Set up vesting with the [Token Vesting tool](https://www.moonsale.app/vesting)";
+  }
+  if (isAskingAboutLock) {
+    return "\n\n💡 Use the [Token Lock tool](https://www.moonsale.app/lock)";
+  }
+  if (isAskingAboutToken) {
+    return "\n\n💡 Create tokens with the [Token Generator](https://www.moonsale.app/create-token)";
+  }
+  
+  return "";
 }
 
 
@@ -430,6 +568,9 @@ export function escape(text) {
 
 export function formatAnswer(text) {
   let out = String(text || "");
+
+  // Normalize typographic dashes so Telegram output looks cleaner.
+  out = out.replace(/[—–]/g, ",");
 
   out = out.replace(
     /📄 (Source|More info): (https?:\/\/\S+)/g,
@@ -442,29 +583,8 @@ export function formatAnswer(text) {
     (_, url) => `📄 [More info](${url})`
   );
 
-  // Add context-aware tips at the end
-  const lowerText = String(text || "").toLowerCase();
-  let tip = "";
-  
-  if (lowerText.includes("presale") && !lowerText.includes("fair")) {
-    tip = "\n\n💡 *Pro tip:* Want to create your own presale\\? Go to [moonsale\\.app/create](https://www.moonsale.app/create)";
-  } else if (lowerText.includes("fair launch")) {
-    tip = "\n\n💡 *Pro tip:* Ready to launch fair\\? Check [moonsale\\.app/create\\-fair\\-launch](https://www.moonsale.app/create-fair-launch)";
-  } else if (lowerText.includes("fee") || lowerText.includes("cost")) {
-    tip = "\n\n💡 *For details:* See the full [fee breakdown](https://www.moonsale.app/fees)";
-  } else if (lowerText.includes("vesting") || lowerText.includes("release")) {
-    tip = "\n\n💡 *For creators:* Set up vesting with the [Token Vesting tool](https://www.moonsale.app/vesting)";
-  } else if (lowerText.includes("lock") || lowerText.includes("liquidity")) {
-    tip = "\n\n💡 *Lock tokens safely:* Use the [Token Lock tool](https://www.moonsale.app/lock)";
-  } else if (lowerText.includes("kyc") || lowerText.includes("audit")) {
-    tip = "\n\n💡 *Verify projects:* Check [KYC & Audit status](https://www.moonsale.app/kyc-audit)";
-  } else if (lowerText.includes("token")) {
-    tip = "\n\n💡 *Need to create a token\\?* Try the [Token Generator](https://www.moonsale.app/create-token)";
-  }
-  
-  if (tip) {
-    out = out + tip;
-  }
+  // Note: Pro tips are now added in buildAssistantReply instead, 
+  // so formatAnswer doesn't add them automatically
 
   if (out.length > 3800) {
     out = out.slice(0, 3800) + "\\.\\.\\.\n\n📄 [Read more](https://www.moonsale.app)";
@@ -480,12 +600,20 @@ export function buildAssistantReply(chatId, query) {
   if (isGreeting(q)) {
     return {
       kind: "greeting",
-      text: escape(getRandomGreeting()),
+      text: sanitizeReplyText(escape(getRandomGreeting())),
     };
   }
 
   if (isOffTopic(q)) {
-    return { kind: "offtopic", text: OFF_TOPIC_REPLY };
+    return { kind: "offtopic", text: sanitizeReplyText(OFF_TOPIC_REPLY) };
+  }
+
+  if (isGroupAboutQuery(q)) {
+    return { kind: "group_info", text: sanitizeReplyText(GROUP_INFO_REPLY) };
+  }
+
+  if (isMoonSaleOverviewQuery(q)) {
+    return { kind: "overview", text: sanitizeReplyText(MOONSALE_OVERVIEW_REPLY) };
   }
 
   const hasFreshContext = context.lastLink && (Date.now() - context.updatedAt <= FOLLOW_UP_CONTEXT_TTL_MS);
@@ -494,7 +622,7 @@ export function buildAssistantReply(chatId, query) {
     const topicText = context.lastTopic ? ` (${context.lastTopic})` : "";
     const raw = `Here is the exact link from your previous topic${topicText}:\n📄 Source: ${context.lastLink}`;
     const tone = detectTone(q);
-    return { kind: "followup", text: formatAnswer(styleAnswer(raw, tone)) };
+    return { kind: "followup", text: sanitizeReplyText(formatAnswer(styleAnswer(raw, tone))) };
   }
 
   const engine = getEngine();
@@ -509,7 +637,7 @@ export function buildAssistantReply(chatId, query) {
       GENERIC_PRESALE_BROWSE_RESPONSE,
       { title: "Browse presales", source: "https://moonsale.app/presale" }
     );
-    return { kind: "presale_browse", text: formatAnswer(GENERIC_PRESALE_BROWSE_RESPONSE) };
+    return { kind: "presale_browse", text: sanitizeReplyText(formatAnswer(GENERIC_PRESALE_BROWSE_RESPONSE)) };
   }
 
   if (isSpecificPresaleQuery(q, topResult)) {
@@ -520,28 +648,43 @@ export function buildAssistantReply(chatId, query) {
       { title: "Presale listings", source: "https://moonsale.app/presale" }
     );
 
-    return { kind: "presale_guard", text: formatAnswer(SPECIFIC_PRESALE_REPLY) };
+    return { kind: "presale_guard", text: sanitizeReplyText(formatAnswer(SPECIFIC_PRESALE_REPLY)) };
   }
 
   const raw = engine.answer(q);
 
+  // Final safety net: never expose specific listing details directly.
+  const leaksSpecificListing = /\bis listed on moonsale as\b|\bcurrent status:\b|\bofficial listing:\b/i.test(raw);
+  if (leaksSpecificListing) {
+    rememberChatContext(
+      chatId,
+      q,
+      SPECIFIC_PRESALE_REPLY,
+      { title: "Presale listings", source: "https://moonsale.app/presale" }
+    );
+    return { kind: "presale_guard", text: sanitizeReplyText(formatAnswer(SPECIFIC_PRESALE_REPLY)) };
+  }
+
   if (raw.includes("don't have specific info")) {
-    return { kind: "fallback", text: FALLBACK };
+    return { kind: "fallback", text: sanitizeReplyText(FALLBACK) };
   }
 
   rememberChatContext(chatId, q, raw, topResult);
 
   const tone = detectTone(q);
   const styled = styleAnswer(raw, tone);
-  return { kind: "answer", text: formatAnswer(styled) };
+  const formattedText = formatAnswer(styled);
+  const tip = getContextualTip(q, "answer");
+  
+  return { kind: "answer", text: sanitizeReplyText(formattedText + tip) };
 }
 
 export function resolveCommandText(command) {
   const cmd = String(command || "").toLowerCase();
-  if (cmd === "/start") return WELCOME;
-  if (cmd === "/help") return HELP;
-  if (cmd === "/links") return LINKS;
-  if (cmd === "/about") return ABOUT;
+  if (cmd === "/start") return sanitizeReplyText(WELCOME);
+  if (cmd === "/help") return sanitizeReplyText(HELP);
+  if (cmd === "/links") return sanitizeReplyText(LINKS);
+  if (cmd === "/about") return sanitizeReplyText(ABOUT);
   return "";
 }
 
