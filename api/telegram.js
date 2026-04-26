@@ -88,6 +88,8 @@ async function getBotIdentity() {
 }
 
 export default async function handler(req, res) {
+  console.log(`[WEBHOOK] ${req.method} /api/telegram`);
+
   if (req.method === "GET") {
     res.status(200).json({ ok: true, endpoint: "/api/telegram" });
     return;
@@ -100,6 +102,7 @@ export default async function handler(req, res) {
   }
 
   if (!TOKEN) {
+    console.error("[WEBHOOK] TELEGRAM_TOKEN not set");
     res.status(500).json({ ok: false, error: "missing_TELEGRAM_TOKEN" });
     return;
   }
@@ -107,6 +110,7 @@ export default async function handler(req, res) {
   if (WEBHOOK_SECRET) {
     const headerSecret = getHeader(req, "x-telegram-bot-api-secret-token");
     if (!headerSecret || headerSecret !== WEBHOOK_SECRET) {
+      console.warn("[WEBHOOK] Secret mismatch — rejected");
       res.status(401).json({ ok: false, error: "invalid_webhook_secret" });
       return;
     }
@@ -116,6 +120,7 @@ export default async function handler(req, res) {
   const message = pickMessage(update);
 
   if (!message || !message.chat) {
+    console.log("[WEBHOOK] Skipped — no message in update");
     res.status(200).json({ ok: true, skipped: "no_message" });
     return;
   }
@@ -126,7 +131,12 @@ export default async function handler(req, res) {
   }
 
   const text = String(message.text || message.caption || "").trim();
+  const chatType = message.chat?.type || "unknown";
+  const fromUser = message.from?.username || message.from?.first_name || "unknown";
+  console.log(`[WEBHOOK] Message from @${fromUser} in ${chatType}: ${text.slice(0, 80)}`);
+
   if (!text) {
+    console.log("[WEBHOOK] Skipped — empty text");
     res.status(200).json({ ok: true, skipped: "empty_text" });
     return;
   }
@@ -150,6 +160,7 @@ export default async function handler(req, res) {
     });
 
     if (!shouldReply) {
+      console.log(`[WEBHOOK] Skipped — mention policy (${chatType})`);
       res.status(200).json({ ok: true, skipped: "mention_policy" });
       return;
     }
@@ -168,6 +179,7 @@ export default async function handler(req, res) {
       return;
     }
 
+    console.log(`[WEBHOOK] Sending reply to chat ${message.chat.id} (${replyText.length} chars)`);
     const sendRes = await sendTelegramMessage(message.chat.id, replyText, message.message_id);
     if (!sendRes.ok) {
       const errBody = await sendRes.text();
@@ -176,6 +188,7 @@ export default async function handler(req, res) {
       return;
     }
 
+    console.log(`[WEBHOOK] Reply sent OK to @${fromUser}`);
     res.status(200).json({ ok: true });
   } catch (err) {
     console.error(`[WEBHOOK ERROR] ${err.message}`);
