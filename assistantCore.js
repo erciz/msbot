@@ -67,7 +67,7 @@ export const LINKS = `
 👨\\-💻 [Developer Docs](https://www.moonsale.app/developer-docs) — Technical integration
 💰 [Platform Fees Info](https://www.moonsale.app/fees) — See all costs
 
-*Need more details\?* 🌙 Visit *[moonsale\.app](https://moonsale.app)*
+*Need more details* 🌙 Visit *[MoonSale Website](https://moonsale.app)*
 `.trim();
 
 export const ABOUT = `

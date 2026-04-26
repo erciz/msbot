@@ -51,13 +51,31 @@ function pickMessage(update) {
   return update?.message || update?.edited_message || null;
 }
 
-async function sendTelegramMessage(chatId, text, replyToMessageId) {
+function markdownV2ToPlainText(text) {
+  let out = String(text || "");
+
+  out = out.replace(/\\([_*\[\]()~`>#+\-=|{}.!\\])/g, "$1");
+  out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1: $2");
+  out = out.replace(/[*_~`]/g, "");
+  out = out.replace(/\r/g, "");
+  out = out.replace(/[ \t]+\n/g, "\n");
+  out = out.replace(/\n{3,}/g, "\n\n");
+
+  return out.trim();
+}
+
+async function sendTelegramMessage(chatId, text, replyToMessageId, options = {}) {
+  const plain = !!options?.plain;
+
   const payload = {
     chat_id: chatId,
     text,
-    ...OPTS_MD,
     allow_sending_without_reply: true,
   };
+
+  if (!plain) {
+    Object.assign(payload, OPTS_MD);
+  }
 
   if (replyToMessageId) {
     payload.reply_to_message_id = replyToMessageId;
@@ -68,6 +86,55 @@ async function sendTelegramMessage(chatId, text, replyToMessageId) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
   });
+}
+
+async function sendTelegramMessageWithFallback(chatId, text, replyToMessageId) {
+  const primary = await sendTelegramMessage(chatId, text, replyToMessageId);
+  if (primary.ok) {
+    return { ok: true, status: primary.status, usedFallback: false };
+  }
+
+  const primaryBody = await primary.text();
+  const primaryDesc = (() => {
+    try {
+      return JSON.parse(primaryBody)?.description || "";
+    } catch {
+      return primaryBody;
+    }
+  })();
+
+  const isMarkdownEntityError =
+    primary.status === 400
+    && /can't parse entities|reserved and must be escaped/i.test(String(primaryDesc || ""));
+
+  if (!isMarkdownEntityError) {
+    return {
+      ok: false,
+      status: primary.status,
+      errorBody: primaryBody,
+      usedFallback: false,
+    };
+  }
+
+  const plainText = markdownV2ToPlainText(text);
+  const fallback = await sendTelegramMessage(chatId, plainText, replyToMessageId, { plain: true });
+  if (fallback.ok) {
+    return {
+      ok: true,
+      status: fallback.status,
+      usedFallback: true,
+      primaryErrorBody: primaryBody,
+    };
+  }
+
+  const fallbackBody = await fallback.text();
+  return {
+    ok: false,
+    status: fallback.status,
+    errorBody: fallbackBody,
+    usedFallback: true,
+    primaryErrorBody: primaryBody,
+  };
 }
 
 async function getBotIdentity() {
@@ -160,12 +227,19 @@ export default async function handler(req, res) {
       }
 
       console.log(`[WEBHOOK] Sending media fallback reply to chat ${message.chat.id}`);
-      const sendRes = await sendTelegramMessage(message.chat.id, MEDIA_UNSUPPORTED_REPLY, message.message_id);
+      const sendRes = await sendTelegramMessageWithFallback(
+        message.chat.id,
+        MEDIA_UNSUPPORTED_REPLY,
+        message.message_id
+      );
       if (!sendRes.ok) {
-        const errBody = await sendRes.text();
-        console.error(`[WEBHOOK SEND ERROR] ${sendRes.status} ${errBody}`);
+        console.error(`[WEBHOOK SEND ERROR] ${sendRes.status} ${sendRes.errorBody}`);
         res.status(502).json({ ok: false, error: "telegram_send_failed" });
         return;
+      }
+
+      if (sendRes.usedFallback) {
+        console.warn(`[WEBHOOK] Markdown parse failed, sent plain fallback: ${sendRes.primaryErrorBody || "unknown"}`);
       }
 
       res.status(200).json({ ok: true, handled: "media_fallback" });
@@ -188,12 +262,19 @@ export default async function handler(req, res) {
       }
 
       console.log(`[WEBHOOK] Sending AI control reply to chat ${message.chat.id}`);
-      const sendRes = await sendTelegramMessage(message.chat.id, replyText, message.message_id);
+      const sendRes = await sendTelegramMessageWithFallback(
+        message.chat.id,
+        replyText,
+        message.message_id
+      );
       if (!sendRes.ok) {
-        const errBody = await sendRes.text();
-        console.error(`[WEBHOOK SEND ERROR] ${sendRes.status} ${errBody}`);
+        console.error(`[WEBHOOK SEND ERROR] ${sendRes.status} ${sendRes.errorBody}`);
         res.status(502).json({ ok: false, error: "telegram_send_failed" });
         return;
+      }
+
+      if (sendRes.usedFallback) {
+        console.warn(`[WEBHOOK] Markdown parse failed, sent plain fallback: ${sendRes.primaryErrorBody || "unknown"}`);
       }
 
       res.status(200).json({ ok: true });
@@ -244,12 +325,19 @@ export default async function handler(req, res) {
     }
 
     console.log(`[WEBHOOK] Sending reply to chat ${message.chat.id} (${replyText.length} chars)`);
-    const sendRes = await sendTelegramMessage(message.chat.id, replyText, message.message_id);
+    const sendRes = await sendTelegramMessageWithFallback(
+      message.chat.id,
+      replyText,
+      message.message_id
+    );
     if (!sendRes.ok) {
-      const errBody = await sendRes.text();
-      console.error(`[WEBHOOK SEND ERROR] ${sendRes.status} ${errBody}`);
+      console.error(`[WEBHOOK SEND ERROR] ${sendRes.status} ${sendRes.errorBody}`);
       res.status(502).json({ ok: false, error: "telegram_send_failed" });
       return;
+    }
+
+    if (sendRes.usedFallback) {
+      console.warn(`[WEBHOOK] Markdown parse failed, sent plain fallback: ${sendRes.primaryErrorBody || "unknown"}`);
     }
 
     console.log(`[WEBHOOK] Reply sent OK to @${fromUser}`);
