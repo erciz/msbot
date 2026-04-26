@@ -5,86 +5,122 @@
 import { SearchEngine } from "./searchEngine.js";
 
 export const WELCOME = `
-👋 *Welcome to MoonSale Assistant\\!*
+� *Welcome to the MoonSale Assistant\\!*
 
-I can answer any question about the MoonSale launchpad — presales, fair launches, fees, refunds, liquidity, vesting, token locking, KYC, audits and more\\.
+Yo\\! 👋 I'm your go\\-to bot for *everything* MoonSale — presales, fair launches, fees, vesting, token locks, KYC, audits, and all the crypto goodness\\!
 
-Just type your question\\!
+No BS, no AI hallucinations — just straight\\-up answers powered by MoonSale's official data\\.
 
-*Examples:*
-• What is MoonSale?
-• How do I create a presale?
-• What happens if softcap isn't reached?
-• Are LP tokens locked?
-• What are the platform fees?
+*Try asking me:*
+• 🤔 What is MoonSale?
+• ➕ How do I create a presale?
+• 💰 What about platform fees?
+• 🔒 Are LP tokens locked?
+• ✅ How do fair launches work?
+• 🌙 What happens if softcap fails?
 
-Type /help for all commands\\.
+Type /help for commands, or just *go ahead and ask\\!* 💬
 `.trim();
 
 export const HELP = `
-*MoonSale Assistant — Commands*
+*🤖 MoonSale Assistant — Full Command Menu*
 
-/start — Welcome message
-/help  — This help message
-/links — Useful MoonSale links
-/about — About this bot
+/start — 👋 Show the welcome message
+/help  — 📚 This help menu
+/links — 🔗 All the cool MoonSale links
+/about — ℹ️ About this awesome bot
 
-*Or just ask any question:*
-• How does vesting work?
-• Can I withdraw early?
-• Which blockchains are supported?
-• How do I lock my tokens?
-• What is a fair launch?
+*Or just vibe and ask:* 💬
+• 💡 How does vesting work?
+• ⏪ Can I withdraw my tokens early?
+• 🌍 Which blockchains are supported?
+• 🔐 How do I lock my tokens?
+• ⚖️ What's a fair launch?
+• 💸 What are the fees?
+• 🎯 How's KYC handled?
+
+Just type any question and I'll hit you with answers\\! 🚀
 `.trim();
 
 export const LINKS = `
-*Useful MoonSale Links*
+*🔗 All MoonSale Links — Your Ultimate Launchpad Toolkit*
 
-🚀 [Browse Presales](https://www.moonsale.app/presale)
-➕ [Create Presale](https://www.moonsale.app/create)
-⚖️ [Create Fair Launch](https://www.moonsale.app/create-fair-launch)
-💰 [Platform Fees](https://www.moonsale.app/fees)
-🔒 [Token Lock](https://www.moonsale.app/lock)
-📅 [Token Vesting](https://www.moonsale.app/vesting)
-🪙 [Token Generator](https://www.moonsale.app/create-token)
-🔍 [Token Scanner](https://www.moonsale.app/token-scanner)
-✅ [KYC & Audit](https://www.moonsale.app/kyc-audit)
-📊 [Tokenomics Creator](https://www.moonsale.app/tokenomics-creator)
-📖 [Investor Docs](https://www.moonsale.app/investor-docs)
-🛠️ [Developer Docs](https://www.moonsale.app/developer-docs)
+*🎯 Main Actions:*
+🚀 [Browse Presales](https://www.moonsale.app/presale) — Explore live & upcoming presales
+➕ [Create a Presale](https://www.moonsale.app/create) — Launch your token\\!
+⚖️ [Create Fair Launch](https://www.moonsale.app/create-fair-launch) — No fixed price needed
+
+*🛠️ Token Tools:*
+🪙 [Token Generator](https://www.moonsale.app/create-token) — Deploy your ERC20
+🔍 [Token Scanner](https://www.moonsale.app/token-scanner) — Check contract safety
+📊 [Tokenomics Creator](https://www.moonsale.app/tokenomics-creator) — Plan your economics
+
+*💰 Investors & Builders:*
+🔒 [Token Lock](https://www.moonsale.app/lock) — Lock your liquidity safe
+📅 [Token Vesting](https://www.moonsale.app/vesting) — Set up release schedules
+✅ [KYC & Audit](https://www.moonsale.app/kyc-audit) — Verify legitimacy
+
+*📖 Documentation:*
+💎 [Investor Docs](https://www.moonsale.app/investor-docs) — Everything for investors
+👨\\-💻 [Developer Docs](https://www.moonsale.app/developer-docs) — Technical integration
+💰 [Platform Fees Info](https://www.moonsale.app/fees) — What's the cost?
+
+*For more details, visit* 🌙 *[moonsale\\.app](https://moonsale.app)*
 `.trim();
 
 export const ABOUT = `
-*About MoonSale Assistant*
+*🤖 About the MoonSale Assistant*
 
-Answers questions about MoonSale using a smart search engine built from the platform's official content\\.
+Built with 💜 for the MoonSale community, this bot is your 24/7 launchpad expert\\!
 
-• No AI hallucinations — answers come from real MoonSale data
-• Always accurate — based on verified platform information
-• Instant responses — no model inference delay
+*What makes us cool:*
+✅ *Zero AI BS* — Real answers from actual MoonSale docs, no hallucinations
+⚡ *Instant replies* — No API calls or inference delays, pure speed
+🎯 *Always accurate* — Verified against official platform data
+🔍 *Smart search* — TF\\-IDF + fuzzy matching = finds what you need
 
-Built for the MoonSale community 🚀
+*Quick facts:*
+🏗️ Built on Node\\.js with a custom search engine
+🌍 Supports both Ethereum & BNB Chain
+💬 Works in DMs, groups, and channels
+
+*Need more\\?*
+📖 Check /links for all resources
+🔗 Visit [moonsale\\.app](https://moonsale.app) for the full platform
+
+Happy launching\\! 🚀
 `.trim();
 
 export const FALLBACK = `
-I'm not sure about that one\\. Try:
+Hmm, that one's got me scratching my circuits\\! 🤖 But no worries\\!
 
-• Rephrasing your question
-• [Investor Docs](https://www.moonsale.app/investor-docs)
-• [Developer Docs](https://www.moonsale.app/developer-docs)
-• [Browse Presales](https://www.moonsale.app/presale)
+*Try these:*
+📝 Rephrase your question — maybe I'll catch it\\!
+📖 [Investor Docs](https://www.moonsale.app/investor-docs) — The ultimate guide
+👨\\-💻 [Developer Docs](https://www.moonsale.app/developer-docs) — For the code\\-heads
+🚀 [Browse Presales](https://www.moonsale.app/presale) — See live projects
+🏠 [Visit moonsale\\.app](https://moonsale.app) — Home base
+
+Or just ask me differently — I learn as we chat\\! 💬
 `.trim();
 
 export const OFF_TOPIC_REPLY =
-  "I only have information about the MoonSale platform\\. " +
-  "Ask me about presales, fair launches, fees, vesting, or token tools\\! 🚀";
+  "Yo, I'm laser\\-focused on MoonSale only\\! 🌙\n\n" +
+  "I can't help with Bitcoin, Solana, sports, or weather\\. But ask me anything about presales, fair launches, token vesting, KYC, fees, or token tools — and I'll be all in\\! 🚀\n\n" +
+  "What MoonSale question can I help with\\?";
 
 const SPECIFIC_PRESALE_REPLY = [
-  "I can't provide specific presale details for individual projects.",
-  "If you mean a specific project, please go to /presale and search there.",
-  "📄 Source: https://moonsale.app/presale",
+  "🔍 Looking for a specific presale\\? You got it\\!",
   "",
-  "Always DYOR before you invest in any project.",
+  "I don't have details about individual projects in my brain — but MoonSale's platform does\\!",
+  "",
+  "👉 [Browse all presales on moonsale\\.app/presale](https://moonsale.app/presale)",
+  "",
+  "You can search by token name, contract, or project there\\. Check the status, hardcap, softcap, and team all in one place\\!",
+  "",
+  "⚠️ *Always DYOR* — Do your own research before investing\\. Check audits, team info, and community vibes\\!",
+  "",
+  "Need general presale info\\? Just ask me something like 'What is a presale\\?' and I'll drop the knowledge\\! 🚀",
 ].join("\n");
 
 export const OPTS_MD = {
@@ -323,9 +359,45 @@ function detectTone(query) {
   return "friendly";
 }
 
-function styleAnswer(answer, _tone) {
-  return answer;
+function styleAnswer(answer, tone) {
+  // Add tone-aware prefixes and formatting
+  if (tone === "casual") {
+    const prefixes = [
+      "Yo, check it out: ",
+      "Real quick: ",
+      "Got you: ",
+      "Here's the deal: ",
+    ];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    return prefix + answer;
+  } else if (tone === "professional") {
+    return answer;
+  } else {
+    // friendly - add emoji or casual opener
+    const friendlyPrefixes = [
+      "Happy to help: ",
+      "Here's the scoop: ",
+      "This should help: ",
+      "Got it, here's what I know: ",
+      "This is what you need to know: ",
+    ];
+    const prefix = friendlyPrefixes[Math.floor(Math.random() * friendlyPrefixes.length)];
+    return prefix + answer;
+  }
 }
+
+const GREETING_RESPONSES = [
+  "Hey\\! 👋 I'm the MoonSale Assistant\\. Ask me anything about the platform\\!\\n\\nTry: What is MoonSale\\? or How do I create a presale\\?",
+  "Yo\\! 🌙 MoonSale Assistant here\\. Ready to talk presales, fair launches, vesting, fees — you name it\\!",
+  "Sup\\! 🚀 Let's chat about MoonSale\\. What do you want to know\\?",
+  "Hey there\\! 💬 I'm your MoonSale bot\\. Ask me about launches, tokens, locks, or anything launchpad\\!",
+  "Hola\\! 👋 MoonSale Assistant at your service\\. What's on your mind\\?",
+];
+
+function getRandomGreeting() {
+  return GREETING_RESPONSES[Math.floor(Math.random() * GREETING_RESPONSES.length)];
+}
+
 
 export function escape(text) {
   return String(text || "").replace(/([_*[\]()~`>#+\-=|{}.!\\])/g, "\\$1");
@@ -345,6 +417,30 @@ export function formatAnswer(text) {
     (_, url) => `📄 [More info](${url})`
   );
 
+  // Add context-aware tips at the end
+  const lowerText = String(text || "").toLowerCase();
+  let tip = "";
+  
+  if (lowerText.includes("presale") && !lowerText.includes("fair")) {
+    tip = "\n\n💡 *Pro tip:* Want to create your own presale\\? Go to [moonsale\\.app/create](https://www.moonsale.app/create)";
+  } else if (lowerText.includes("fair launch")) {
+    tip = "\n\n💡 *Pro tip:* Ready to launch fair\\? Check [moonsale\\.app/create\\-fair\\-launch](https://www.moonsale.app/create-fair-launch)";
+  } else if (lowerText.includes("fee") || lowerText.includes("cost")) {
+    tip = "\n\n💡 *For details:* See the full [fee breakdown](https://www.moonsale.app/fees)";
+  } else if (lowerText.includes("vesting") || lowerText.includes("release")) {
+    tip = "\n\n💡 *For creators:* Set up vesting with the [Token Vesting tool](https://www.moonsale.app/vesting)";
+  } else if (lowerText.includes("lock") || lowerText.includes("liquidity")) {
+    tip = "\n\n💡 *Lock tokens safely:* Use the [Token Lock tool](https://www.moonsale.app/lock)";
+  } else if (lowerText.includes("kyc") || lowerText.includes("audit")) {
+    tip = "\n\n💡 *Verify projects:* Check [KYC & Audit status](https://www.moonsale.app/kyc-audit)";
+  } else if (lowerText.includes("token")) {
+    tip = "\n\n💡 *Need to create a token\\?* Try the [Token Generator](https://www.moonsale.app/create-token)";
+  }
+  
+  if (tip) {
+    out = out + tip;
+  }
+
   if (out.length > 3800) {
     out = out.slice(0, 3800) + "\\.\\.\\.\n\n📄 [Read more](https://www.moonsale.app)";
   }
@@ -359,7 +455,7 @@ export function buildAssistantReply(chatId, query) {
   if (isGreeting(q)) {
     return {
       kind: "greeting",
-      text: escape("Hey! 👋 I'm the MoonSale Assistant. Ask me anything about the platform!\n\nTry: What is MoonSale? or How do I create a presale?"),
+      text: escape(getRandomGreeting()),
     };
   }
 
