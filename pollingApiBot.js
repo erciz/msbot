@@ -99,15 +99,20 @@ async function maybeDeleteWebhook() {
 }
 
 async function loadBotIdentity() {
-  if (botIdentity.username && botIdentity.id) return;
+  // If username is already provided via env, mention-only policy can still work.
+  if (botIdentity.username) return;
 
-  const data = await telegramRequest("getMe");
-  if (!data?.ok || !data?.result) return;
+  try {
+    const data = await telegramRequest("getMe");
+    if (!data?.ok || !data?.result) return;
 
-  const username = String(data.result.username || "").toLowerCase();
-  const id = Number(data.result.id || 0) || 0;
+    const username = String(data.result.username || "").toLowerCase();
+    const id = Number(data.result.id || 0) || 0;
 
-  botIdentity = { username: username || botIdentity.username, id: id || botIdentity.id };
+    botIdentity = { username: username || botIdentity.username, id: id || botIdentity.id };
+  } catch {
+    console.error("[WARN] getMe failed. Set BOT_USERNAME in .env for mention-only mode.");
+  }
 }
 
 async function sendTyping(chatId) {
