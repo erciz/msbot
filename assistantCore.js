@@ -5,34 +5,34 @@
 import { SearchEngine } from "./searchEngine.js";
 
 export const WELCOME = `
-� *Welcome to the MoonSale Assistant\\!*
+🌙 *Welcome to the MoonSale Assistant\\!*
 
-Yo\\! 👋 I'm your go\\-to bot for *everything* MoonSale — presales, fair launches, fees, vesting, token locks, KYC, audits, and all the crypto goodness\\!
+Hi 👋 I can help with MoonSale presales, fair launches, fees, vesting, token locks, KYC, and audits\\.
 
-No BS, no AI hallucinations — just straight\\-up answers powered by MoonSale's official data\\.
+You will get clear answers based on official MoonSale information\\.
 
-*Try asking me:*
-• 🤔 What is MoonSale?
-• ➕ How do I create a presale?
-• 💰 What about platform fees?
-• 🔒 Are LP tokens locked?
-• ✅ How do fair launches work?
-• 🌙 What happens if softcap fails?
+*Try asking:*
+• 🤔 What is MoonSale\\?
+• ➕ How do I create a presale\\?
+• 💰 What are the platform fees\\?
+• 🔒 Are LP tokens locked\\?
+• ✅ How does a fair launch work\\?
+• 🌙 What happens if softcap fails\\?
 
-Type /help for commands, or just *go ahead and ask\\!* 💬
+Type /help to see all commands, or send your question directly\\.
 `.trim();
 
 export const HELP = `
-*🤖 MoonSale Assistant — Full Command Menu*
+*🤖 MoonSale Assistant — Command Menu*
 
 /start — 👋 Show the welcome message
-/help  — 📚 This help menu
-/links — 🔗 All the cool MoonSale links
-/about — ℹ️ About this awesome bot
+/help  — 📚 Show this help menu
+/links — 🔗 Open useful MoonSale links
+/about — ℹ️ Learn what this bot does
 /stopAiBot — ⏸️ Pause AI replies for 12h
 /startAiBot — ▶️ Resume AI replies
 
-*Or just vibe and ask:* 💬
+*You can also ask directly:* 💬
 • 💡 How does vesting work?
 • ⏪ Can I withdraw my tokens early?
 • 🌍 Which blockchains are supported?
@@ -41,15 +41,15 @@ export const HELP = `
 • 💸 What are the fees?
 • 🎯 How's KYC handled?
 
-Just type any question and I'll hit you with answers\\! 🚀
+I will reply with concise answers from MoonSale documentation\\.
 `.trim();
 
 export const LINKS = `
-*🔗 All MoonSale Links — Your Ultimate Launchpad Toolkit*
+*🔗 MoonSale Links — Quick Access Guide*
 
 *🎯 Main Actions:*
 🚀 [Browse Presales](https://www.moonsale.app/presale) — Explore live & upcoming presales
-➕ [Create a Presale](https://www.moonsale.app/create) — Launch your token\\!
+➕ [Create a Presale](https://www.moonsale.app/create) — Launch your token
 ⚖️ [Create Fair Launch](https://www.moonsale.app/create-fair-launch) — No fixed price needed
 
 *🛠️ Token Tools:*
@@ -57,7 +57,7 @@ export const LINKS = `
 🔍 [Token Scanner](https://www.moonsale.app/token-scanner) — Check contract safety
 📊 [Tokenomics Creator](https://www.moonsale.app/tokenomics-creator) — Plan your economics
 
-*💰 Investors & Builders:*
+*💰 Investor & Builder Tools:*
 🔒 [Token Lock](https://www.moonsale.app/lock) — Lock your liquidity safe
 📅 [Token Vesting](https://www.moonsale.app/vesting) — Set up release schedules
 ✅ [KYC & Audit](https://www.moonsale.app/kyc-audit) — Verify legitimacy
@@ -65,21 +65,21 @@ export const LINKS = `
 *📖 Documentation:*
 💎 [Investor Docs](https://www.moonsale.app/investor-docs) — Everything for investors
 👨\\-💻 [Developer Docs](https://www.moonsale.app/developer-docs) — Technical integration
-💰 [Platform Fees Info](https://www.moonsale.app/fees) — What's the cost?
+💰 [Platform Fees Info](https://www.moonsale.app/fees) — See all costs
 
-*For more details, visit* 🌙 *[moonsale\\.app](https://moonsale.app)*
+*Need more details\?* 🌙 Visit *[moonsale\.app](https://moonsale.app)*
 `.trim();
 
 export const ABOUT = `
 *🤖 About the MoonSale Assistant*
 
-Built with 💜 for the MoonSale community, this bot is your 24/7 launchpad expert\\!
+Built for the MoonSale community, this bot provides fast and reliable launchpad guidance\\.
 
-*What makes us cool:*
-✅ *Zero AI BS* — Real answers from actual MoonSale docs, no hallucinations
-⚡ *Instant replies* — No API calls or inference delays, pure speed
-🎯 *Always accurate* — Verified against official platform data
-🔍 *Smart search* — TF\\-IDF + fuzzy matching = finds what you need
+*Why this bot is useful:*
+✅ *Zero AI hallucinations* — Answers are grounded in MoonSale docs
+⚡ *Fast replies* — Built for instant support
+🎯 *Focused accuracy* — Answers stay on MoonSale topics
+🔍 *Smart search* — TF\\-IDF + fuzzy matching improves relevance
 
 *Quick facts:*
 🏗️ Built on Node\\.js with a custom search engine
@@ -88,43 +88,43 @@ Built with 💜 for the MoonSale community, this bot is your 24/7 launchpad expe
 
 *Need more\\?*
 📖 Check /links for all resources
-🔗 Visit [moonsale\\.app](https://moonsale.app) for the full platform
+🔗 Visit [moonsale\\.app](https://moonsale.app) for full platform details
 
-Happy launching\\! 🚀
+Happy launching 🚀
 `.trim();
 
 export const FALLBACK = `
-Hmm, that one's got me scratching my circuits\\! 🤖 But no worries\\!
+I could not find a confident answer for that yet 🤖
 
-If I still miss your exact case, please wait for the admin team to reply in chat.
+For the most accurate help, please wait for the admin team to reply in chat\\.
 
-*Try these:*
-📝 Rephrase your question — maybe I'll catch it
+*Useful options:*
+📝 Rephrase your question and I will try again
 📖 [Investor Docs](https://www.moonsale.app/investor-docs)
 👨\\-💻 [Developer Docs](https://www.moonsale.app/developer-docs)
 🚀 [Browse Presales](https://www.moonsale.app/presale)
 🏠 [Visit moonsale\\.app](https://moonsale.app)
 
-Or just ask me differently — I learn as we chat\\! 💬
+I am here if you want to try another MoonSale question 💬
 `.trim();
 
 export const OFF_TOPIC_REPLY =
-  "Yo, I'm laser\\-focused on MoonSale only\\! 🌙\n\n" +
-  "I can't help with Bitcoin, Solana, sports, or weather\\. But ask me anything about presales, fair launches, token vesting, KYC, fees, or token tools — and I'll be all in\\! 🚀\n\n" +
-  "What MoonSale question can I help with\\?";
+  "I can only help with MoonSale topics 🌙\n\n" +
+  "I cannot assist with general crypto markets, sports, or weather\\. Ask me about presales, fair launches, token vesting, KYC, fees, token locks, or MoonSale tools\\.\n\n" +
+  "What MoonSale topic would you like help with\\?";
 
 const SPECIFIC_PRESALE_REPLY = [
-  "🔍 Looking for a specific presale\\? You got it\\!",
+  "🔍 Looking for a specific presale\\?",
   "",
-  "I don't have details about individual projects in my brain, but MoonSale's platform does\\!",
+  "I do not provide direct project\\-by\\-project investment calls here, but MoonSale listings show the latest details\\.",
   "",
   "👉 [Browse all presales on moonsale\\.app/presale](https://moonsale.app/presale)",
   "",
-  "You can search by token name, contract, or project there\\. Check the status, hardcap, softcap, and team all in one place\\!",
+  "Search by token name, contract, or project\\. You can check status, hardcap, softcap, and team information there\\.",
   "",
-  "⚠️ *Always DYOR* — Do your own research before investing\\. Check audits, team info, and community vibes\\!",
+  "⚠️ *Always DYOR* \\- Do your own research before investing\\. Review audits, team information, and community signals\\.",
   "",
-  "Need general presale info\\? Just ask me something like 'What is a presale\\?' and I'll drop the knowledge\\! 🚀",
+  "Need platform guidance instead\\? Ask me: 'What is a presale\\?' and I will explain clearly\\.",
 ].join("\n");
 
 export const OPTS_MD = {
@@ -638,10 +638,10 @@ function styleAnswer(answer, tone) {
   // Add tone-aware prefixes and formatting
   if (tone === "casual") {
     const prefixes = [
-      "Yo, check it out: ",
-      "Real quick: ",
-      "Got you: ",
-      "Here's the deal: ",
+      "Quick answer: ",
+      "Short version: ",
+      "Here you go: ",
+      "In brief: ",
     ];
     const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
     return prefix + answer;
@@ -650,11 +650,11 @@ function styleAnswer(answer, tone) {
   } else {
     // friendly - add emoji or casual opener
     const friendlyPrefixes = [
-      "Happy to help: ",
-      "Here's the scoop: ",
-      "This should help: ",
-      "Got it, here's what I know: ",
-      "This is what you need to know: ",
+      "✅ Clear answer: ",
+      "💡 Key details: ",
+      "📌 What to know: ",
+      "🤝 Happy to help: ",
+      "ℹ️ Summary: ",
     ];
     const prefix = friendlyPrefixes[Math.floor(Math.random() * friendlyPrefixes.length)];
     return prefix + answer;
@@ -666,11 +666,11 @@ function sanitizeReplyText(text) {
 }
 
 const GREETING_RESPONSES = [
-  "Hey\\! 👋 I'm the MoonSale Assistant\\. Ask me anything about the platform\\!\\n\\nTry: What is MoonSale\\? or How do I create a presale\\?",
-  "Yo\\! 🌙 MoonSale Assistant here\\. Ready to talk presales, fair launches, vesting, fees — you name it\\!",
-  "Sup\\! 🚀 Let's chat about MoonSale\\. What do you want to know\\?",
-  "Hey there\\! 💬 I'm your MoonSale bot\\. Ask me about launches, tokens, locks, or anything launchpad\\!",
-  "Hola\\! 👋 MoonSale Assistant at your service\\. What's on your mind\\?",
+  "Hello\\! 👋 I'm the MoonSale Assistant\\. Ask me anything about MoonSale\\.\\n\\nTry: What is MoonSale\\? or How do I create a presale\\?",
+  "Welcome\\! 🌙 I can help with MoonSale presales, fair launches, vesting, fees, and token tools\\.",
+  "Hi there\\! 🚀 Need help with MoonSale launches or investor info\\?",
+  "Hey\\! 💬 Ask me about token locks, KYC, audits, or launch setup\\.",
+  "Hello\\! ✅ MoonSale Assistant is ready\\. What would you like to know\\?",
 ];
 
 export function getRandomGreeting() {

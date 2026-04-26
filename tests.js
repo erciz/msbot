@@ -577,11 +577,10 @@ test("Multiple greetings produce varied responses", () => {
 test("Tone detection works for casual queries", () => {
   const casual = buildAssistantReply(1, "yo whats up");
   assert(
-    casual.text.includes("deal")
-      || casual.text.includes("Yo")
-      || casual.text.includes("check")
-      || casual.text.includes("Got you")
-      || casual.text.includes("Real quick"),
+    casual.text.includes("Quick answer")
+      || casual.text.includes("Short version")
+      || casual.text.includes("Here you go")
+      || casual.text.includes("In brief"),
     "Casual query should get casual tone response"
   );
 });
