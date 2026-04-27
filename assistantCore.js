@@ -334,6 +334,33 @@ const TOKEN_SCANNER_ELIGIBILITY_FAIL_REPLY = [
   "📖 [Dev Reference](https://www.moonsale.app/developer-docs)",
 ].join("\n");
 
+const CLARIFY_TOKEN_LAUNCH_REPLY = [
+  "I want to make sure I understood your request\.",
+  "",
+  "Are you asking about:",
+  "1\) creating a token contract",
+  "2\) launching a presale or fair launch for that token",
+  "",
+  "Reply with 1 or 2 and I will give exact steps\.",
+].join("\n");
+
+const CLARIFY_WORKFLOW_REPLY = [
+  "I want to make sure I understood your workflow question\.",
+  "",
+  "Is this about token creation, presale\/fair launch setup, or claim\/refund flow\?",
+  "Share one target flow and I will give step\-by\-step guidance\.",
+].join("\n");
+
+const CLARIFY_GENERIC_REPLY = [
+  "I want to make sure I understood before giving a wrong answer\.",
+  "",
+  "Please rephrase with one clear topic, for example:",
+  "• token creation",
+  "• presale setup",
+  "• fair launch setup",
+  "• claim or refund",
+].join("\n");
+
 const PLATFORM_LINKS = {
   home: "https://www.moonsale.app",
   presale: "https://www.moonsale.app/presale",
@@ -530,6 +557,9 @@ function isCreateTokenQuery(query) {
   if (!q) return false;
 
   if (/\bhwo\s+to\s+create\s+token\b/.test(q)) return true;
+  if (/\bhow\s+to\s+launch\s+(a\s+)?token\b/.test(q)) return true;
+  if (/\bhow\s+do\s+i\s+launch\s+(a\s+)?token\b/.test(q)) return true;
+  if (/\blaunch\s+(my\s+|a\s+)?token\b/.test(q)) return true;
   if (/\bhow\s+do\s+i\s+create\s+token\b/.test(q)) return true;
   if (/\bcreate\s+token\b/.test(q)) return true;
   if (/\btoken\s+generator\b/.test(q)) return true;
@@ -913,6 +943,139 @@ function renderReplyText(text, outputFormat = "telegram") {
   return safe;
 }
 
+const OVERLAP_IGNORE_TOKENS = new Set([
+  "how", "what", "when", "where", "why", "which", "who", "is", "are", "to", "for", "the", "a", "an",
+  "on", "in", "of", "with", "can", "you", "me", "please", "help", "i", "we", "it", "do", "does",
+  "steps", "step", "workflow", "process", "guide", "tell", "about", "info", "details",
+]);
+
+function extractCandidateAnswerText(entry) {
+  let answer = String(entry?.answer || entry?.text || "").trim();
+  if (answer.startsWith("Q:")) {
+    const parts = answer.split(/\nA:\s*/i);
+    answer = parts.length > 1 ? parts.slice(1).join("\nA:") : answer;
+  }
+  return answer.trim();
+}
+
+function candidateTextBlob(entry) {
+  const answer = extractCandidateAnswerText(entry);
+  return `${entry?.title || ""} ${entry?.question || ""} ${answer}`.toLowerCase();
+}
+
+function isStatusCountdownCandidate(entry) {
+  if (!entry) return false;
+  const tags = new Set(entry.tags || []);
+  const blob = candidateTextBlob(entry);
+  const hasStatusSignal =
+    tags.has("status")
+    || /\b(status|live|upcoming|ended|failed|filled|cancelled|canceled|finalized|pending)\b/.test(blob);
+  const hasCountdownSignal = /\b(countdown|timezone|buy is still locked|past start time|start time|starts? when)\b/.test(blob);
+  return hasStatusSignal && hasCountdownSignal;
+}
+
+function hasLooseLexicalOverlap(query, entry) {
+  const queryTokens = tokenizeSimple(query).filter(t => t.length >= 3 && !OVERLAP_IGNORE_TOKENS.has(t));
+  if (!queryTokens.length) return false;
+
+  const entryTokens = new Set(tokenizeSimple(candidateTextBlob(entry)).filter(t => t.length >= 3));
+  return queryTokens.some(t => entryTokens.has(t));
+}
+
+function isHowToWorkflowQuery(query) {
+  const q = normalizeLoose(query);
+  if (!q) return false;
+  return /\b(how|workflow|steps?|process)\b/.test(q);
+}
+
+function runTop3CandidateSanityCheck(query, candidates) {
+  const topCandidates = Array.isArray(candidates) ? candidates.slice(0, 3) : [];
+  const top = topCandidates[0] || null;
+  if (!top) {
+    return { candidate: null, replacedTop: false, shouldClarify: false, reason: "empty" };
+  }
+
+  const q = normalizeLoose(query);
+  const asksHow = isHowToWorkflowQuery(q);
+  const asksTokenLaunch = /\btoken\b/.test(q) && /\b(create|launch|deploy|generator)\b/.test(q);
+
+  if (asksHow && isStatusCountdownCandidate(top)) {
+    const alt = topCandidates.find(c => !isStatusCountdownCandidate(c) && hasLooseLexicalOverlap(q, c));
+    if (alt) {
+      return { candidate: alt, replacedTop: true, shouldClarify: false, reason: "howto_status_replaced" };
+    }
+    return { candidate: top, replacedTop: false, shouldClarify: true, reason: "howto_status_no_alt" };
+  }
+
+  if (asksHow && asksTokenLaunch) {
+    const preferred = topCandidates.find(c => {
+      const tags = new Set(c?.tags || []);
+      const blob = candidateTextBlob(c);
+      if (isStatusCountdownCandidate(c)) return false;
+      return tags.has("token_create")
+        || tags.has("creator")
+        || /\b(create\s+token|token\s+generator|deploy\s+token|token\s+contract)\b/.test(blob);
+    });
+
+    if (preferred && preferred !== top && Number(preferred?._score || 0) >= Number(top?._score || 0) - 0.45) {
+      return { candidate: preferred, replacedTop: true, shouldClarify: false, reason: "token_launch_preferred" };
+    }
+  }
+
+  return { candidate: top, replacedTop: false, shouldClarify: false, reason: "ok" };
+}
+
+function evaluateAnswerConfidence(query, candidates, selectedCandidate) {
+  const topCandidates = Array.isArray(candidates) ? candidates.slice(0, 3) : [];
+  const q = normalizeLoose(query);
+  const singleTokenLookup = /^[a-z0-9_-]{3,20}$/.test(q) && !RESERVED_GENERIC_SINGLE_TERMS.has(q);
+
+  if (singleTokenLookup) {
+    return { shouldClarify: false, reason: "single_token_lookup" };
+  }
+
+  if (!selectedCandidate) {
+    return { shouldClarify: true, reason: "no_candidate" };
+  }
+
+  const topScore = Number(selectedCandidate._score || 0);
+  const secondScore = Number(topCandidates[1]?._score || 0);
+  const thirdScore = Number(topCandidates[2]?._score || 0);
+  const margin = topScore - secondScore;
+  const spread = topScore - thirdScore;
+  const hasOverlap = hasLooseLexicalOverlap(q, selectedCandidate);
+
+  if (isHowToWorkflowQuery(q) && isStatusCountdownCandidate(selectedCandidate)) {
+    return { shouldClarify: true, reason: "howto_status_mismatch" };
+  }
+
+  if (!hasOverlap && topScore < 2.0) {
+    return { shouldClarify: true, reason: "low_overlap_low_score" };
+  }
+
+  if (!hasOverlap && margin <= 0.06) {
+    return { shouldClarify: true, reason: "low_overlap_small_margin" };
+  }
+
+  if (!hasOverlap && topCandidates.length >= 3 && spread <= 0.05) {
+    return { shouldClarify: true, reason: "top3_ambiguous_low_overlap" };
+  }
+
+  if (topScore < 0.35) {
+    return { shouldClarify: true, reason: "very_low_score" };
+  }
+
+  return { shouldClarify: false, reason: "confident" };
+}
+
+function buildClarifyReply(query) {
+  const q = normalizeLoose(query);
+  const asksTokenLaunch = /\btoken\b/.test(q) && /\b(create|launch|deploy|generator)\b/.test(q);
+  if (asksTokenLaunch) return CLARIFY_TOKEN_LAUNCH_REPLY;
+  if (isHowToWorkflowQuery(q)) return CLARIFY_WORKFLOW_REPLY;
+  return CLARIFY_GENERIC_REPLY;
+}
+
 export function buildAssistantReply(chatId, query, options = {}) {
   const outputFormat = String(options?.format || "telegram").toLowerCase() === "plain"
     ? "plain"
@@ -1026,7 +1189,20 @@ export function buildAssistantReply(chatId, query, options = {}) {
   }
 
   const engine = getEngine();
-  const raw = engine.answer(effectiveQuery);
+  const topCandidates = engine.search(effectiveQuery, 3);
+  const sanityCheck = runTop3CandidateSanityCheck(effectiveQuery, topCandidates);
+  const selectedCandidate = sanityCheck.candidate || topCandidates[0] || null;
+  const confidence = evaluateAnswerConfidence(effectiveQuery, topCandidates, selectedCandidate);
+
+  if (sanityCheck.shouldClarify || confidence.shouldClarify) {
+    const clarifyReply = buildClarifyReply(effectiveQuery);
+    rememberChatContext(chatId, q, clarifyReply, selectedCandidate, effectiveQuery);
+    return respond("clarify", formatAnswer(clarifyReply));
+  }
+
+  const raw = sanityCheck.replacedTop && selectedCandidate
+    ? extractCandidateAnswerText(selectedCandidate)
+    : engine.answer(effectiveQuery);
   const tunedRaw = platformizeFailedSaleAnswer(raw, effectiveQuery);
 
   // Final safety net: never expose specific listing details directly.
@@ -1042,7 +1218,9 @@ export function buildAssistantReply(chatId, query, options = {}) {
   }
 
   if (tunedRaw.includes("don't have specific info")) {
-    return respond("fallback", FALLBACK);
+    const clarifyReply = buildClarifyReply(effectiveQuery);
+    rememberChatContext(chatId, q, clarifyReply, selectedCandidate, effectiveQuery);
+    return respond("clarify", formatAnswer(clarifyReply));
   }
 
   const tone = detectTone(q);
@@ -1053,7 +1231,7 @@ export function buildAssistantReply(chatId, query, options = {}) {
   const guaranteedLinkTip = getGuaranteedLinkTip(effectiveQuery, baseOutput);
   const finalOutput = baseOutput + guaranteedLinkTip;
 
-  rememberChatContext(chatId, q, tunedRaw + tip + guaranteedLinkTip, null, effectiveQuery);
+  rememberChatContext(chatId, q, tunedRaw + tip + guaranteedLinkTip, selectedCandidate, effectiveQuery);
 
   return respond("answer", finalOutput);
 }

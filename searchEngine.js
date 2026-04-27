@@ -419,10 +419,25 @@ export class SearchEngine {
     };
   }
 
+  _isStatusCountdownEntry(entry) {
+    if (!entry) return false;
+    const tags = new Set(entry.tags || []);
+    const answerText = this._extractAnswerText(entry);
+    const blob = `${entry.question || ""} ${entry.title || ""} ${answerText}`.toLowerCase();
+    const hasStatusSignal =
+      tags.has("status") ||
+      /\b(status|live|upcoming|ended|failed|filled|cancelled|canceled|finalized|pending)\b/.test(blob);
+    const hasCountdownSignal =
+      /\b(countdown|timezone|buy is still locked|past start time|starts? when|start time)\b/.test(blob);
+    return hasStatusSignal && hasCountdownSignal;
+  }
+
   _intentAdjust(query, entry, intent = this._detectIntent(query)) {
     const tags = new Set(entry.tags || []);
     const answer = this._extractAnswerText(entry).toLowerCase();
     const hasFeeText = /\b(fee|fees|cost|costs|charge|charges|pricing|\$100|2%)\b/.test(answer);
+    const asksHowToFlow = intent.asksHow && /\b(create|launch|deploy|setup|start|steps?)\b/.test(query);
+    const asksHowToTokenFlow = asksHowToFlow && /\btoken\b/.test(query);
 
     let score = 0;
 
@@ -438,6 +453,12 @@ export class SearchEngine {
       if (tags.has("how_it_works") || tags.has("investor") || tags.has("creator")) score += 0.25;
       if (answer.length >= 100) score += 0.15;
       if (!intent.asksFee && answer.length < 70) score -= 0.12;
+
+      // Guardrail: procedural "how to" questions should not route to status countdown responses.
+      if (asksHowToFlow && this._isStatusCountdownEntry(entry)) score -= 2.2;
+      if (asksHowToFlow && tags.has("status") && !intent.asksStatus) score -= 1.2;
+      if (asksHowToFlow && tags.has("creator")) score += 0.4;
+      if (asksHowToTokenFlow && (tags.has("token_create") || tags.has("creator"))) score += 0.95;
     }
 
     if (intent.asksSoftcapFailure) {
@@ -736,7 +757,7 @@ export class SearchEngine {
         answer: "Create a fair launch at https://moonsale.app/create-fair-launch. Connect wallet, set token pool and softcap, set min and max buy plus timeline, deploy, then complete listing fee to publish.",
       },
       {
-        pattern: /\bhow\s+do\s+i\s+create\s+token\b|\bhwo\s+to\s+create\s+token\b|\bcreate\s+token\b|\btoken\s+generator\b|\btoken\s+kaise\s+(banau|banao|banaye|create)\b|\b(gimana|cara)\b.*\b(bikin|buat|create)\b.*\btoken\b/,
+        pattern: /\bhow\s+do\s+i\s+create\s+token\b|\bhwo\s+to\s+create\s+token\b|\bhow\s+to\s+launch\s+(a\s+)?token\b|\bhow\s+do\s+i\s+launch\s+(a\s+)?token\b|\blaunch\s+(my\s+|a\s+)?token\b|\bcreate\s+token\b|\btoken\s+generator\b|\btoken\s+kaise\s+(banau|banao|banaye|create)\b|\b(gimana|cara)\b.*\b(bikin|buat|create)\b.*\btoken\b/,
         answer: "Create token at https://moonsale.app/create-token. Set name, symbol, supply, and decimals, deploy from wallet, then create presale at https://moonsale.app/create if needed.",
       },
       {

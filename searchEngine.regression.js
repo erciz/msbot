@@ -65,6 +65,18 @@ const REGRESSION_CASES = [
     mustIncludeAny: ["create-token", "create token at"],
   },
   {
+    name: "English token launch intent",
+    query: "how to launch a token",
+    mustIncludeAny: ["create-token", "create token at"],
+    mustNotInclude: ["sale countdown", "buy is still locked"],
+  },
+  {
+    name: "How-to token launch avoids status countdown",
+    query: "how can i start token launch process",
+    mustIncludeAny: ["create token", "create-token", "token generator", "deploy token"],
+    mustNotInclude: ["sale countdown", "buy is still locked", "timezone on the sale countdown"],
+  },
+  {
     name: "Group typo normalization",
     query: "what is thi group about",
     mustIncludeAny: ["group is for moonsale community support", "launch guidance"],

@@ -367,6 +367,12 @@ test("Mixed-language: gimana bikin token", () => {
   assertIncludes(reply.text, "create-token", "Should include token generator link for Indo query");
 });
 
+test("English launch-token query routes to token create guide", () => {
+  const reply = buildAssistantReply(94, "how to launch a token", { format: "plain" });
+  assertEqual(reply.kind, "token_create_guide", "Should route launch-token phrasing to token create guide");
+  assertIncludes(reply.text, "create-token", "Should include token generator link");
+});
+
 test("Custom workflow query should not trigger presale guard", () => {
   const reply = buildAssistantReply(93, "if i change token after filling info will values reset", { format: "plain" });
   assertEqual(reply.kind, "answer", "Custom workflow query should resolve as answer");
@@ -374,17 +380,20 @@ test("Custom workflow query should not trigger presale guard", () => {
   assert(!reply.text.toLowerCase().includes("browse all presales"), "Should not route to presale guard");
 });
 
-test("Unknown question gets helpful response", () => {
-  const reply = buildAssistantReply(92, "xyzabc123notarealquestion");
-  // Response should be helpful - either referring to docs, or suggesting to check official site, etc.
+test("Low-confidence unknown question asks for clarification", () => {
+  const reply = buildAssistantReply(92, "abc xyz random unknown question", { format: "plain" });
+  assertEqual(reply.kind, "clarify", "Low-confidence retrieval should return clarifying question");
+  assertIncludes(reply.text, "make sure i understood", "Clarifying response should explain confidence guard");
+});
+
+test("How-to token launch query should never return countdown status answer", () => {
+  const reply = buildAssistantReply(95, "how can i start token launch process", { format: "plain" });
   assert(
-    reply.text.toLowerCase().includes("docs") || 
-    reply.text.toLowerCase().includes("official") ||
-    reply.text.toLowerCase().includes("rephrase") ||
-    reply.text.toLowerCase().includes("help") ||
-    reply.kind === "answer",
-    "Should provide some form of helpful guidance"
+    reply.kind === "answer" || reply.kind === "clarify" || reply.kind === "token_create_guide",
+    "How-to launch query should resolve as actionable answer or clarifying flow"
   );
+  assert(!reply.text.toLowerCase().includes("sale countdown"), "How-to launch should not return countdown status guidance");
+  assert(!reply.text.toLowerCase().includes("buy is still locked"), "How-to launch should not return status-lock troubleshooting");
 });
 
 test("Follow-up context: live mode lock extension", () => {
