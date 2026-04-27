@@ -13,8 +13,14 @@ import path from "path";
 const DATA_DIR = "./moonsale_data";
 const KB_FILE  = path.join(DATA_DIR, "knowledge_base.json");
 const CUSTOM_QA_FILE = path.join(DATA_DIR, "custom_qa.json");
+const CUSTOM_QA_PRIORITY_FILE = path.join(DATA_DIR, "custom_qa_priority.jsonl");
 
 const CUSTOM_QA_TEMPLATE = [];
+const CUSTOM_QA_PRIORITY_TEMPLATE = [
+  "# One JSON object per line.",
+  "# Fields: question, answer, tags (optional)",
+  '# {"question":"sample question","answer":"sample answer","tags":["custom","priority"]}',
+].join("\n");
 
 function ensureCustomQAFile() {
   if (fs.existsSync(CUSTOM_QA_FILE)) return;
@@ -27,6 +33,31 @@ function ensureCustomQAFile() {
   console.log(`  Created custom QA file: ${CUSTOM_QA_FILE}`);
 }
 
+function ensureCustomQAPriorityFile() {
+  if (fs.existsSync(CUSTOM_QA_PRIORITY_FILE)) return;
+
+  fs.writeFileSync(CUSTOM_QA_PRIORITY_FILE, `${CUSTOM_QA_PRIORITY_TEMPLATE}\n`, "utf8");
+  console.log(`  Created priority custom QA file: ${CUSTOM_QA_PRIORITY_FILE}`);
+}
+
+function normalizeCustomQARecord(item, defaultTags = ["custom"]) {
+  if (!item || typeof item !== "object") return null;
+
+  const question = String(item.question || "").trim();
+  const answer = String(item.answer || "").trim();
+  if (!question || !answer) return null;
+
+  const tags = Array.isArray(item.tags)
+    ? item.tags.map(t => String(t).trim()).filter(Boolean)
+    : defaultTags;
+
+  return {
+    question,
+    answer,
+    tags: tags.length ? tags : defaultTags,
+  };
+}
+
 function loadCustomQA() {
   ensureCustomQAFile();
 
@@ -35,15 +66,55 @@ function loadCustomQA() {
     if (!Array.isArray(raw)) return [];
 
     return raw
-      .filter(item => item && typeof item === "object")
-      .map(item => ({
-        question: String(item.question || "").trim(),
-        answer: String(item.answer || "").trim(),
-        tags: Array.isArray(item.tags) ? item.tags.map(t => String(t).trim()).filter(Boolean) : ["custom"],
-      }))
-      .filter(item => item.question && item.answer);
+      .map(item => normalizeCustomQARecord(item, ["custom"]))
+      .filter(Boolean);
   } catch (err) {
     console.log(`  ⚠  Could not parse custom QA file: ${err.message}`);
+    return [];
+  }
+}
+
+function loadPriorityCustomQA() {
+  ensureCustomQAPriorityFile();
+
+  try {
+    const rawText = fs.readFileSync(CUSTOM_QA_PRIORITY_FILE, "utf8");
+    const trimmed = rawText.trim();
+    if (!trimmed) return [];
+
+    // Allow either JSON array or JSONL to make AI-generated imports easy.
+    if (trimmed.startsWith("[")) {
+      const parsed = JSON.parse(trimmed);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .map(item => normalizeCustomQARecord(item, ["custom", "priority"]))
+        .filter(Boolean);
+    }
+
+    const output = [];
+    let invalidLines = 0;
+    const lines = rawText.split(/\r?\n/);
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith("#")) continue;
+
+      try {
+        const parsed = JSON.parse(line);
+        const normalized = normalizeCustomQARecord(parsed, ["custom", "priority"]);
+        if (normalized) output.push(normalized);
+      } catch {
+        invalidLines += 1;
+      }
+    }
+
+    if (invalidLines > 0) {
+      console.log(`  ⚠  Skipped ${invalidLines} invalid line(s) in ${CUSTOM_QA_PRIORITY_FILE}`);
+    }
+
+    return output;
+  } catch (err) {
+    console.log(`  ⚠  Could not parse priority custom QA file: ${err.message}`);
     return [];
   }
 }
@@ -1455,6 +1526,8 @@ function parseListingMetadata(page) {
 
 function getVariantSourceType(baseSourceType) {
   switch (baseSourceType) {
+    case "custom_qa_priority":
+      return "custom_priority_variant";
     case "custom_qa":
       return "custom_variant";
     case "manual_qa":
@@ -1478,10 +1551,14 @@ function build() {
   const entries   = [];
   const tagIndex  = {};
   const customQA = loadCustomQA();
+  const priorityCustomQA = loadPriorityCustomQA();
   const customKeys = new Set(
     customQA.map(qa => `${normaliseQuestion(qa.question || "")}::${normaliseQuestion(qa.answer || "")}`)
   );
-  const curatedManual = [...ALL_MANUAL_QA, ...customQA];
+  const priorityCustomKeys = new Set(
+    priorityCustomQA.map(qa => `${normaliseQuestion(qa.question || "")}::${normaliseQuestion(qa.answer || "")}`)
+  );
+  const curatedManual = [...ALL_MANUAL_QA, ...customQA, ...priorityCustomQA];
   const manualSeen = new Set();
   const listingSeen = new Set();
   let manualAdded = 0;
@@ -1492,7 +1569,11 @@ function build() {
     const key = `${normaliseQuestion(qa.question || "")}::${normaliseQuestion(qa.answer || "")}`;
     if (!qa.question || !qa.answer || manualSeen.has(key)) continue;
     manualSeen.add(key);
-    const sourceType = customKeys.has(key) ? "custom_qa" : "manual_qa";
+    const sourceType = priorityCustomKeys.has(key)
+      ? "custom_qa_priority"
+      : customKeys.has(key)
+        ? "custom_qa"
+        : "manual_qa";
 
     const id = `manual_${entries.length}`;
     entries.push({
@@ -1510,6 +1591,7 @@ function build() {
   }
   console.log(`  Manual Q&A pairs : ${manualAdded}`);
   console.log(`  Custom Q&A pairs : ${customQA.length}`);
+  console.log(`  Priority custom Q&A pairs : ${priorityCustomQA.length}`);
 
   // ── 2. Scraped corpus ─────────────────────────────────────────────────
   const corpusPath = path.join(DATA_DIR, "corpus.json");
@@ -1684,6 +1766,7 @@ function build() {
       totalQuestions,
       manualQA:      manualAdded,
       customQA:      customQA.length,
+      customQAPriority: priorityCustomQA.length,
       websiteListings: listingAdded,
       materializedVariants,
       scrapedChunks,
@@ -1699,6 +1782,7 @@ function build() {
   console.log(`\n  Total KB entries : ${entries.length}`);
   console.log(`  Manual Q&A       : ${manualAdded}`);
   console.log(`  Custom Q&A       : ${customQA.length}`);
+  console.log(`  Custom Q&A (priority) : ${priorityCustomQA.length}`);
   console.log(`  Website listings : ${listingAdded}`);
   console.log(`  Scraped chunks   : ${scrapedChunks}`);
   console.log(`  Tags indexed     : ${Object.keys(tagIndex).length}`);

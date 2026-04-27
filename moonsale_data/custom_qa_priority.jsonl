@@ -1,0 +1,3 @@
+# One JSON object per line.
+# Fields: question, answer, tags (optional)
+# {"question":"sample question","answer":"sample answer","tags":["custom","priority"]}

@@ -367,6 +367,13 @@ test("Mixed-language: gimana bikin token", () => {
   assertIncludes(reply.text, "create-token", "Should include token generator link for Indo query");
 });
 
+test("Custom workflow query should not trigger presale guard", () => {
+  const reply = buildAssistantReply(93, "if i change token after filling info will values reset", { format: "plain" });
+  assertEqual(reply.kind, "answer", "Custom workflow query should resolve as answer");
+  assertIncludes(reply.text, "Changing token can alter dependent values", "Should return custom QA answer");
+  assert(!reply.text.toLowerCase().includes("browse all presales"), "Should not route to presale guard");
+});
+
 test("Unknown question gets helpful response", () => {
   const reply = buildAssistantReply(92, "xyzabc123notarealquestion");
   // Response should be helpful - either referring to docs, or suggesting to check official site, etc.

@@ -19,6 +19,25 @@ npm run scrape
 npm run build
 ```
 
+### Add your own Q&A (including very large AI-generated sets)
+You now have two custom sources:
+
+- `moonsale_data/custom_qa.json`
+: Best for hand-edited lists (JSON array).
+- `moonsale_data/custom_qa_priority.jsonl`
+: Best for bulk imports (one JSON object per line), intended for very large datasets.
+
+Example JSONL line:
+
+```json
+{"question":"if i change token after filling info will values reset","answer":"Changing token can alter dependent values. Re-check config, info, and deposit calculations before deploying.","tags":["fair_launch","creator","token","support"]}
+```
+
+Priority behavior:
+
+- Entries from `custom_qa_priority.jsonl` are ranked above normal custom/manual/website entries when matching.
+- Re-run `npm run build` after editing either custom file.
+
 ### Test answers locally
 ```bash
 npm run search

@@ -225,6 +225,7 @@ const GENERIC_QUERY_STOPWORDS = new Set([
   "can", "you", "i", "it", "we", "do", "how", "why", "when", "where",
   "which", "who", "are", "am", "to", "for", "of", "on", "in", "a", "an",
   "the", "group", "grp", "chat", "channel", "chanel", "community", "purpose", "topic",
+  "info", "details", "detail", "latest", "update", "updates",
 ]);
 
 const RESERVED_GENERIC_SINGLE_TERMS = new Set([
@@ -238,6 +239,12 @@ const DOMAIN_TOPIC_TERMS = new Set([
   "refund", "refunds", "deadline", "claim", "claims", "withdraw", "penalty",
   "liquidity", "lock", "vesting", "token", "tokens", "scanner", "eligibility",
   "failed", "fails", "failure", "difference", "vs", "min", "max", "fee", "fees",
+]);
+
+const PROJECT_LOOKUP_TEMPLATE_TERMS = new Set([
+  "status", "current", "official", "listing", "listed", "project", "projects",
+  "token", "tokens", "presale", "launch", "fair", "check", "show", "find",
+  "about", "link", "url", "website", "source", "name", "symbol",
 ]);
 
 const GENERIC_PRESALE_BROWSE_RESPONSE = `
@@ -590,10 +597,21 @@ function isMoonSaleOverviewQuery(query) {
   return false;
 }
 
+function isLikelyProjectLookupTerm(token) {
+  if (token.length < 3) return false;
+  if (!/[a-z]/.test(token)) return false;
+  if (PROJECT_TERM_STOPWORDS.has(token)) return false;
+  if (GENERIC_QUERY_STOPWORDS.has(token)) return false;
+  if (DOMAIN_TOPIC_TERMS.has(token)) return false;
+  if (PROJECT_LOOKUP_TEMPLATE_TERMS.has(token)) return false;
+  return true;
+}
+
 function getProjectLookupTerms() {
   if (projectLookupTermsCache) return projectLookupTermsCache;
 
-  const terms = new Set();
+  const allTerms = new Set();
+  const slugTerms = new Set();
   const engine = getEngine();
 
   for (const entry of (engine.entries || [])) {
@@ -602,25 +620,23 @@ function getProjectLookupTerms() {
 
     const combined = `${entry?.title || ""} ${entry?.question || ""}`;
     for (const token of tokenizeSimple(combined)) {
-      if (token.length < 3) continue;
-      if (!/[a-z]/.test(token)) continue;
-      if (PROJECT_TERM_STOPWORDS.has(token)) continue;
-      terms.add(token);
+      if (!isLikelyProjectLookupTerm(token)) continue;
+      allTerms.add(token);
     }
 
     const source = String(entry?.source || "").toLowerCase();
     const slugMatch = source.match(/\/(presale|fair-launch)\/([^/?#]+)/i);
     if (!slugMatch) continue;
 
-    for (const token of slugMatch[2].split("-")) {
-      if (token.length < 3) continue;
-      if (!/[a-z]/.test(token)) continue;
-      if (PROJECT_TERM_STOPWORDS.has(token)) continue;
-      terms.add(token.toLowerCase());
+    for (const rawToken of slugMatch[2].split("-")) {
+      const token = rawToken.toLowerCase();
+      if (!isLikelyProjectLookupTerm(token)) continue;
+      slugTerms.add(token);
+      allTerms.add(token);
     }
   }
 
-  projectLookupTermsCache = terms;
+  projectLookupTermsCache = { allTerms, slugTerms };
   return projectLookupTermsCache;
 }
 
@@ -645,7 +661,7 @@ function isSpecificPresaleQuery(query, topResult) {
   if (isGroupAboutQuery(query)) return false;
   if (isMoonSaleOverviewQuery(query)) return false;
 
-  const terms = getProjectLookupTerms();
+  const { allTerms, slugTerms } = getProjectLookupTerms();
   const meaningfulTokens = queryTokens.filter(t => (
     t.length >= 3
     && !PROJECT_TERM_STOPWORDS.has(t)
@@ -657,7 +673,8 @@ function isSpecificPresaleQuery(query, topResult) {
   const projectCandidateTokens = meaningfulTokens.filter(t => !DOMAIN_TOPIC_TERMS.has(t));
   if (!projectCandidateTokens.length) return false;
 
-  const hasProjectToken = projectCandidateTokens.some(t => terms.has(t));
+  const hasSlugProjectToken = projectCandidateTokens.some(t => slugTerms.has(t));
+  const hasGeneralProjectToken = projectCandidateTokens.some(t => allTerms.has(t));
   const topIsProjectLookup = !!topResult && Array.isArray(topResult.tags) && topResult.tags.includes("project_lookup");
 
   const singleToken = queryTokens.length === 1;
@@ -667,8 +684,9 @@ function isSpecificPresaleQuery(query, topResult) {
     && !DOMAIN_TOPIC_TERMS.has(queryTokens[0]);
   const asksSpecificDetail = /\b(status|details?|price|hardcap|softcap|buy|invest|claim|live|cancelled|canceled|upcoming|filled|failed)\b/.test(q);
 
-  if (hasProjectToken) return true;
-  if (singleTokenProjectLike && terms.has(queryTokens[0])) return true;
+  if (hasSlugProjectToken) return true;
+  if (hasGeneralProjectToken && asksSpecificDetail) return true;
+  if (singleTokenProjectLike && (slugTerms.has(queryTokens[0]) || allTerms.has(queryTokens[0]))) return true;
   if (singleTokenProjectLike && topIsProjectLookup) return true;
   if (topIsProjectLookup && asksSpecificDetail) return true;
 

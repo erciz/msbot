@@ -80,6 +80,12 @@ const REGRESSION_CASES = [
     query: "bester",
     mustIncludeAny: ["official listing:", "listed on moonsale"],
   },
+  {
+    name: "Custom workflow QA should answer directly",
+    query: "if i change token after filling info will values reset",
+    mustIncludeAny: ["changing token can alter dependent values", "re-check config"],
+    mustNotInclude: ["browse all presales", "official listing:"],
+  },
 ];
 
 export function runSearchEngineRegressionSuite({ verbose = true } = {}) {

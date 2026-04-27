@@ -124,8 +124,10 @@ function fuzzyScore(a, b) {
 }
 
 const SOURCE_BASE_PRIORITY = Object.freeze({
+  custom_qa_priority: 1.3,
   custom_qa: 0.95,
   manual_qa: 0.9,
+  custom_priority_variant: 1.08,
   custom_variant: 0.78,
   manual_variant: 0.72,
   website_listing: 0.68,
@@ -315,7 +317,9 @@ export class SearchEngine {
 
     if (asksDocsKnowledge) {
       if (sourceTier === "manual_qa" || sourceTier === "custom_qa") score += 1.0;
+      if (sourceTier === "custom_qa_priority") score += 1.2;
       if (sourceTier === "manual_variant" || sourceTier === "custom_variant") score += 0.65;
+      if (sourceTier === "custom_priority_variant") score += 0.8;
       if (sourceTier === "website_listing" || sourceTier === "website_listing_variant") score -= 0.55;
       if (sourceTier === "website_chunk" || sourceTier === "scraped_chunk") score -= 0.3;
     }
@@ -323,7 +327,7 @@ export class SearchEngine {
     if (asksWebsiteLookup) {
       if (sourceTier === "website_listing" || sourceTier === "website_listing_variant") score += 1.2;
       if (sourceTier === "website_faq" || sourceTier === "website_card" || sourceTier === "website_variant") score += 0.55;
-      if ((sourceTier === "manual_qa" || sourceTier === "custom_qa") && intent.asksSingleToken) score -= 0.35;
+      if ((sourceTier === "manual_qa" || sourceTier === "custom_qa" || sourceTier === "custom_qa_priority") && intent.asksSingleToken) score -= 0.35;
       if (sourceTier === "website_chunk" || sourceTier === "scraped_chunk") score -= 0.25;
     }
 
@@ -636,7 +640,7 @@ export class SearchEngine {
 
   _getAnswerBucket(entry) {
     const tier = this._resolveSourceTier(entry);
-    if (["manual_qa", "custom_qa", "manual_variant", "custom_variant"].includes(tier)) return "manual";
+    if (["manual_qa", "custom_qa", "custom_qa_priority", "manual_variant", "custom_variant", "custom_priority_variant"].includes(tier)) return "manual";
     if (["website_listing", "website_listing_variant"].includes(tier)) return "website_listing";
     if (["website_faq", "website_card", "website_variant"].includes(tier)) return "website_structured";
     if (["website_chunk", "scraped_chunk"].includes(tier)) return "website_chunk";
