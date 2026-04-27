@@ -49,7 +49,9 @@ function normalizeCustomQARecord(item, defaultTags = ["custom"]) {
 
   const tags = Array.isArray(item.tags)
     ? item.tags.map(t => String(t).trim()).filter(Boolean)
-    : defaultTags;
+    : typeof item.tags === "string"
+      ? item.tags.split(/[|,;]/g).map(t => String(t).trim()).filter(Boolean)
+      : defaultTags;
 
   return {
     question,

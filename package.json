@@ -7,6 +7,7 @@
   "scripts": {
     "scrape": "node scraper.js",
     "build": "node buildKnowledgeBase.js",
+    "qa:priority:import": "node scripts/importPriorityQA.js",
     "search": "node searchEngine.js",
     "test": "node tests.js",
     "test:searchEngine": "node searchEngine.regression.js",

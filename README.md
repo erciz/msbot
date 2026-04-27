@@ -38,6 +38,39 @@ Priority behavior:
 - Entries from `custom_qa_priority.jsonl` are ranked above normal custom/manual/website entries when matching.
 - Re-run `npm run build` after editing either custom file.
 
+Tags guidance:
+
+- Yes, you can add many tags per row. There is no strict hard limit in code.
+- Use focused tags for better retrieval quality (recommended around 3-12 meaningful tags per row).
+- Keep tags lowercase and consistent (example: `fair_launch`, `creator`, `refund`, `support`).
+
+Step-by-step activation flow:
+
+1. Prepare your AI-generated file as JSON or JSONL with `question`, `answer`, `tags`.
+2. Import into priority store:
+   `npm run qa:priority:import -- ./your-ai-qa-file.json`
+3. Build the knowledge base:
+   `npm run build`
+4. Run tests (recommended):
+   `npm run test`
+5. Activate runtime changes:
+   Local polling bot: restart `npm run bot`.
+   Direct API polling mode: restart `npm run bot:api`.
+   Vercel webhook mode: redeploy project (or push commit and let Vercel deploy).
+
+Optional import modes:
+
+- Merge mode (default): adds new rows and keeps old rows.
+   `npm run qa:priority:import -- ./your-ai-qa-file.json`
+- Replace mode: rewrites priority store from input.
+   `npm run qa:priority:import -- ./your-ai-qa-file.json replace`
+- Dry run: preview import stats without writing file.
+   `npm run qa:priority:import -- ./your-ai-qa-file.json dry-run`
+
+Direct node command (supports named flags):
+
+- `node scripts/importPriorityQA.js --input ./your-ai-qa-file.json --dry-run`
+
 ### Test answers locally
 ```bash
 npm run search
