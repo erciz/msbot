@@ -18,6 +18,7 @@ import {
 import {
   getReplyHintForUser,
   isAiControlCommand,
+  isGroupAdminSender,
   isAiPausedForUser,
   isPrivilegedTelegramUser,
   runAiControlCommand,
@@ -47,6 +48,16 @@ function registerCommand(bot, command) {
     try {
       const userId = msg.from?.id;
       if (isPrivilegedTelegramUser(userId)) return;
+      const isGroupAdmin = await isGroupAdminSender({
+        chatType: msg.chat?.type,
+        chatId: msg.chat?.id,
+        userId,
+        resolveMemberStatus: async ({ chatId, userId }) => {
+          const member = await bot.getChatMember(chatId, userId);
+          return member?.status || "";
+        },
+      });
+      if (isGroupAdmin) return;
       if (await isAiPausedForUser(userId)) return;
 
       const text = resolveCommandText(command);
@@ -105,6 +116,16 @@ function startPollingBot() {
 
     const userId = msg.from?.id;
     if (isPrivilegedTelegramUser(userId)) return;
+    const isGroupAdmin = await isGroupAdminSender({
+      chatType: msg.chat?.type,
+      chatId: msg.chat?.id,
+      userId,
+      resolveMemberStatus: async ({ chatId, userId }) => {
+        const member = await bot.getChatMember(chatId, userId);
+        return member?.status || "";
+      },
+    });
+    if (isGroupAdmin) return;
 
     if (hasTelegramMediaContent(msg)) {
       if (await isAiPausedForUser(userId)) return;

@@ -1,0 +1,191 @@
+PAGE: Security Score Methodology | MoonSale
+URL: https://www.moonsale.app/security-score
+CATEGORY: discovered
+============================================================
+
+=== HEADINGS ===
+# How the Security Score Is Calculated
+## Overview
+## The 11 Categories
+## How Each Score Is Computed
+## Critical Risks
+## Display & Color Coding
+## For Creators
+## For Investors
+## For Developers
+## What is Not Yet Scored
+
+=== CONTENT ===
+Every presale and fair launch on MoonSale is automatically scored across eleven weighted categories using on-chain data and platform metadata. Total score is out of 50 points. This page documents the exact rules and is the canonical reference for creators, investors, and developers.
+The Security Score is a single number out of 50 that summarizes eleven independent checks on a project. The score appears at the top of the Security tab on every presale and fair launch detail page, alongside individual category results and any critical risks detected.
+Each category is graded 0/3, 1/3, 2/3, or 3/3, multiplied by its weight, then summed. A check that has not yet been evaluated (for example, on-chain reads that are still loading) is shown as N/A and excluded from the denominator so the score stays honest while data populates.
+Categories are grouped into four tiers by weight. Critical-tier checks are the heaviest and a failure on any of them raises a red flag regardless of total score.
+Math: 3 critical × 8 + 4 high × 5 + 2 standard × 2 + 2 low × 1 = 50 points.
+1. Presale Allocation %, weight 5 pts
+Combined presale + liquidity tokens as a percent of total supply.
+3. Token Deposited On-Chain, weight 2 pts
+The platform reads the sale contract's token balance directly. If the balance covers what the sale needs, the check passes.
+4. Liquidity Lock Duration, weight 8 pts (Critical)
+5. Team Token Lock (weighted average), weight 8 pts (Critical)
+The platform queries MoonsaleTokenLock for every active lock of this token, keeps only locks owned by the creator (skipping vesting), and computes the amount-weighted average days remaining until unlock.
+Formula: Σ(amount × days) ÷ Σ(amount)
+6. No Blacklist Function, weight 2 pts
+Platform scanner checks the token bytecode for blacklist-style functions.
+7. KYC Verified, weight 5 pts
+Issued by MoonSale after creator identity verification.
+8. Audit Completed, weight 5 pts
+Issued by MoonSale after the project provides an audit report.
+9. Liquidity %, weight 5 pts
+Percentage of raised funds going to PancakeSwap liquidity at finalization.
+11. Social Presence, weight 1 pt
+Counts how many of the four signals are present: Twitter, Telegram, Website, Logo.
+12. Contract Verified on Block Explorer, weight 8 pts (Critical)
+Server-side check via the Etherscan V2 unified API. The platform fetches the token's source code from BscScan / Etherscan and confirms it is publicly readable.
+13. Softcap Size, weight 1 pt
+Larger softcaps signal more legitimate fundraises. Thresholds in BNB.
+Three categories carry the highest weight and are flagged separately:
+If any of these categories scores 0 (Risky), the Security tab displays a red “Critical Risks Detected” banner regardless of total score. Even a project at 40+ out of 50 should be treated with caution if it carries a critical risk.
+The Security tab on every sale page shows:
+Color coding by category outcome:
+If you are launching a project on MoonSale, here is how to land a high score without gaming the system:
+How to read a Security Score before contributing to a sale:
+The scoring engine is one pure function consumed by both presale and fair launch detail pages.
+Inputs the engine expects:
+Categories that are not yet ready (still loading on-chain data, or not applicable like Team Lock when no locks exist) return baseScore=null and are excluded from the denominator. The total is rounded to 1 decimal; per-category earned points are rounded to 2 decimals.
+The current 11 categories are a subset of a planned 15. The remaining four are tracked but not yet implemented:
+When these are added, the weight distribution will be rebalanced to remain at exactly 50 total. Until then, the eleven implemented categories are reweighted so the maximum score is exactly 50.
+Back to home or browse current sales.
+
+=== LISTS ===
+
+Combined presale + liquidity tokens as a percent of total supply.:
+ • ≥ 55% → 3/3 No Risk → 5.00 pts
+ • 45% to < 55% → 2/3 Low Risk → 3.33 pts
+ • 35% to < 45% → 1/3 Medium Risk → 1.67 pts
+ • < 35% → Risky → 0 pts
+
+The platform reads the sale contract's token balance directly. If the balance covers what the sale needs, the check passes.:
+ • Deposited → 3/3 → 2 pts
+ • Not deposited → 0 pts
+
+4. Liquidity Lock Duration, weight 8 pts (Critical):
+ • ≥ 365 days → 3/3 → 8.00 pts
+ • 180 to < 365 days → 2/3 → 5.33 pts
+ • 90 to < 180 days → 1/3 → 2.67 pts
+ • < 90 days → Risky → 0 pts
+
+Formula: Σ(amount × days) ÷ Σ(amount):
+ • ≥ 365 days → 3/3 → 8.00 pts
+ • 180 to < 365 days → 2/3 → 5.33 pts
+ • 60 to < 180 days → 1/3 → 2.67 pts
+ • < 60 days → Risky → 0 pts
+ • No team locks at all → N/A (excluded from total)
+
+Platform scanner checks the token bytecode for blacklist-style functions.:
+ • No blacklist → 3/3 → 2 pts
+ • Blacklist detected → Risky → 0 pts
+
+Issued by MoonSale after creator identity verification.:
+ • KYC verified → 3/3 → 5 pts
+ • Not verified → 0 pts
+
+Issued by MoonSale after the project provides an audit report.:
+ • Audited → 3/3 → 5 pts
+ • Not audited → 0 pts
+
+Percentage of raised funds going to PancakeSwap liquidity at finalization.:
+ • ≥ 85% → 3/3 → 5.00 pts
+ • 65% to < 85% → 2/3 → 3.33 pts
+ • 51% to < 65% → 1/3 → 1.67 pts
+ • < 51% → Risky → 0 pts
+
+Counts how many of the four signals are present: Twitter, Telegram, Website, Logo.:
+ • 4 of 4 → 3/3 → 1.00 pt
+ • 3 of 4 → 2/3 → 0.67 pt
+ • 2 of 4 → 1/3 → 0.33 pt
+ • ≤ 1 of 4 → Risky → 0 pts
+
+Server-side check via the Etherscan V2 unified API. The platform fetches the token's source code from BscScan / Etherscan and confirms it is publicly readable.:
+ • Source verified → 3/3 → 8 pts
+ • Not verified → Risky → 0 pts
+
+Larger softcaps signal more legitimate fundraises. Thresholds in BNB.:
+ • ≥ 50 BNB → 3/3 → 1.00 pt
+ • 20 to < 50 BNB → 2/3 → 0.67 pt
+ • 10 to < 20 BNB → 1/3 → 0.33 pt
+ • < 10 BNB → Risky → 0 pts
+
+Three categories carry the highest weight and are flagged separately::
+ • Liquidity Lock Duration, an unlocked or short-locked LP is the most common rug-pull vector.
+ • Team Token Lock, team tokens that can be dumped immediately are the second most common rug.
+ • Contract Verified on Explorer, an unverified contract hides its behavior from buyers and from auditors.
+
+The Security tab on every sale page shows::
+ • Header, large total like “38.3 / 50” with a circular progress ring.
+ • Critical Risks banner, only shown if any critical-tier check scores 0.
+ • 11 category rows, each showing the symbol (✓ / ⚠ / ✗ / …), the label, the score (e.g. “2/3 · Low Risk”), the actual measured value, and the points earned vs the weight.
+ • Footer note explaining N/A handling.
+
+Color coding by category outcome::
+ • Green, 3/3 No Risk
+ • Light Green, 2/3 Low Risk
+ • Amber, 1/3 Medium Risk
+ • Red, 0/3 Risky
+ • Gray, N/A (not yet evaluated, excluded from total)
+
+If you are launching a project on MoonSale, here is how to land a high score without gaming the system::
+ • Lock LP for 365+ days, full 8 pts on the heaviest category.
+ • Lock team tokens for 365+ days via the MoonSale Locker, another full 8 pts. If you have no team allocation at all, this check is N/A and harmlessly excluded.
+ • Use a token deployed via the MoonSale token factory, auto-verified on BscScan, full 8 pts on Contract Verified.
+ • Allocate ≥ 55% of supply to presale + liquidity combined, full 5 pts.
+ • Set liquidity ≥ 85% of raised funds going to PancakeSwap, full 5 pts.
+ • Get KYC verified via MoonSale and submit an audit, 10 pts combined.
+ • Fill all four social fields (Twitter, Telegram, Website, Logo), full 1 pt.
+ • Set softcap ≥ 50 BNB, full 1 pt.
+ • Token Deposited happens automatically when you use Create Presale & Deposit. No extra step.
+ • Avoid blacklist functions in your token contract.
+
+How to read a Security Score before contributing to a sale::
+ • Check critical risks first. A red banner overrides any green total.
+ • Never invest in a 0/3 on Liquidity Lock or Team Token Lock, these are the textbook rug-pull setups.
+ • Watch the actual values, not just the score. “180 days” is a real commitment. “30 days” is barely better than nothing.
+ • KYC and Audit badges are issued by MoonSale after manual review. They are not automatic and indicate the creator submitted documentation.
+ • A score of 30+/50 with no critical risks is a reasonable baseline for a serious project.
+ • A score above 40/50 with all critical checks green is strong, but never replaces your own diligence on team and tokenomics.
+
+The scoring engine is one pure function consumed by both presale and fair launch detail pages.:
+ • apps/web/lib/securityScore.ts, computeSecurityScore() takes a ScoreInput and returns SecurityScore with per-category results, total, max, percentage, and any critical risks.
+ • apps/web/components/presale/SecurityScoreCard.tsx, renders the score header, critical risks banner, and per-category rows.
+ • apps/web/app/api/security/check-verified/route.ts, server-side proxy to the Etherscan V2 unified API for the Contract Verified check. Cached for one hour.
+ • Wagmi hooks in PresalePageClient and FairLaunchPageClient handle the on-chain reads (token balance for Deposited check, MoonsaleTokenLock query for Team Lock).
+
+Inputs the engine expects::
+ • liquidityLockDays, liquidityPercent (bps), softcapEth, from DB
+ • hasBlacklistWarning, isKyc, isAudited, from DB
+ • twitterUrl, telegramUrl, websiteUrl, logoUrl, from DB
+ • totalSupply, presaleAllocationTokens, computed from DB columns
+ • tokenDepositedOnChain, on-chain ERC20.balanceOf compared to required
+ • contractVerified, result from /api/security/check-verified, null while loading
+ • tokenLockWeightedDays, computed client-side from MoonsaleTokenLock locks() reads
+
+The current 11 categories are a subset of a planned 15. The remaining four are tracked but not yet implemented::
+ • Max Wallet Unlock %, checks the largest single wallet's unlocked allocation.
+ • Contract Tax, sums buy and sell tax. Easy for MoonSale-deployed tokens, requires a third-party scanner for external tokens.
+ • Top 10 Holder Concentration, requires post-launch holder data via BscScan API, with LP and lock addresses excluded.
+ • Liquidity-to-Market-Cap Ratio, requires live BNB-to-USD price plus FDV calculation.
+
+=== TABLES ===
+CATEGORY | TIER | WEIGHT
+------------------------------------------------------------
+Liquidity Lock Duration | Critical | 8 pts
+Team Token Lock (weighted avg) | Critical | 8 pts
+Contract Verified on Explorer | Critical | 8 pts
+Presale Allocation % | High | 5 pts
+Liquidity % | High | 5 pts
+KYC Verified | High | 5 pts
+Audit Completed | High | 5 pts
+Token Deposited On-Chain | Standard | 2 pts
+No Blacklist Function | Standard | 2 pts
+Social Presence | Low | 1 pts
+Softcap Size | Low | 1 pts
+TOTAL | 50 pts

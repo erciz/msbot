@@ -1,58 +1,47 @@
 MoonSale Scrape Report
 ============================================================
-Pages scraped  : 45
+Pages scraped  : 34
 Pages failed   : 1
-Total chars    : 37,347
-Approx tokens  : ~9,337
+Total chars    : 50,789
+Approx tokens  : ~12,697
 FAQ entries    : 0
 Feature cards  : 15
 
 ── Pages ──
   ✓    1292 chars  https://www.moonsale.app/
-  ✓    1925 chars  https://www.moonsale.app/presale
+  ✓    5046 chars  https://www.moonsale.app/presale
   ✓    6481 chars  https://www.moonsale.app/investors
   ✓     154 chars  https://www.moonsale.app/create
   ✓     164 chars  https://www.moonsale.app/create-fair-launch
   ✓     148 chars  https://www.moonsale.app/my-launches
   ✓     148 chars  https://www.moonsale.app/invested
-  ✓    2772 chars  https://www.moonsale.app/investor-docs
-  ✓    4038 chars  https://www.moonsale.app/developer-docs
+  ✓    3707 chars  https://www.moonsale.app/investor-docs
+  ✓    5381 chars  https://www.moonsale.app/developer-docs
   ✓     472 chars  https://www.moonsale.app/fees
-  ✓     432 chars  https://www.moonsale.app/ca-audits
   ✓     799 chars  https://www.moonsale.app/kyc-audit
   ✓     264 chars  https://www.moonsale.app/create-token
-  ✓     242 chars  https://www.moonsale.app/lock
-  ✓     289 chars  https://www.moonsale.app/vesting
+  ✓     243 chars  https://www.moonsale.app/lock
+  ✓     290 chars  https://www.moonsale.app/vesting
   ✓     274 chars  https://www.moonsale.app/token-management
   ✓     364 chars  https://www.moonsale.app/token-scanner
   ✓     290 chars  https://www.moonsale.app/tokenomics-creator
-  ✓     218 chars  https://www.moonsale.app/presale/besti-besti-ewer
-  ✓     270 chars  https://www.moonsale.app/presale/bester-bester-sni2
-  ✓     408 chars  https://www.moonsale.app/presale/quantifi-quant-p3le
+  ✓     401 chars  https://www.moonsale.app/presale/nexora-nxo-5xhd
+  ✓     298 chars  https://www.moonsale.app/presale/mainnet-mnt-7j8i
+  ✓     224 chars  https://www.moonsale.app/presale/hems-ai-hems-72a5
+  ✓     229 chars  https://www.moonsale.app/presale/quantifi-quant-m1xy
   ✓     407 chars  https://www.moonsale.app/presale/quantfi-quant-j9p3
-  ✓     231 chars  https://www.moonsale.app/presale/cortexa-ai-crxa-tjfs
-  ✓     249 chars  https://www.moonsale.app/presale/ui-test-presale-uitst-gfnn
   ✓     317 chars  https://www.moonsale.app/presale/i-love-usa-ilu-sai1
-  ✓     225 chars  https://www.moonsale.app/presale/synapsex-synx-cq4o
-  ✓     231 chars  https://www.moonsale.app/presale/cortexa-ai-crxa-t48s
-  ✓     409 chars  https://www.moonsale.app/presale/synapsex-synx-d0td
-  ✓     409 chars  https://www.moonsale.app/presale/synapsex-synx-1sq6
-  ✓     407 chars  https://www.moonsale.app/presale/liquidity-luid-xlxd
-  ✓     213 chars  https://www.moonsale.app/presale/wana-wana-9wej
-  ✓     223 chars  https://www.moonsale.app/presale/bester-bester-no3l
-  ✓     232 chars  https://www.moonsale.app/presale/token-ai-token-ta61
-  ✓     227 chars  https://www.moonsale.app/presale/maga-ai-maga-f3zv
-  ✓     222 chars  https://www.moonsale.app/presale/show-it-show-bcyl
-  ✓     236 chars  https://www.moonsale.app/fair-launch/fl-giti-giti-yy52
-  ✓     236 chars  https://www.moonsale.app/fair-launch/fl-giti-giti-edng
-  ✓     410 chars  https://www.moonsale.app/fair-launch/fl-syndicate-ai-sda-h5rt
-  ✓     253 chars  https://www.moonsale.app/fair-launch/fl-belka-cat-belka-rsg0
-  ✓     263 chars  https://www.moonsale.app/fair-launch/ui-fair-launch-uifl-ufa0
-  ✓     263 chars  https://www.moonsale.app/fair-launch/ui-fair-launch-uifl-737z
-  ✓     244 chars  https://www.moonsale.app/presale/1061de70-d9bb-4314-930a-5a323e243833
-  ✓     208 chars  https://www.moonsale.app/presale/blax-blax
+  ✓     412 chars  https://www.moonsale.app/presale/liquidity-luid-xlxd
   ✓     210 chars  https://www.moonsale.app/presale/sofy-sofy
+  ✓     420 chars  https://www.moonsale.app/fair-launch/fl-nexora-nxo-f8g4
+  ✓     423 chars  https://www.moonsale.app/fair-launch/fl-nexora-nxo-7agv
+  ✓     250 chars  https://www.moonsale.app/fair-launch/fl-rip-trump-rip-9g77
+  ✓     253 chars  https://www.moonsale.app/fair-launch/fl-rip-trump-rip-hi7a
+  ✓     253 chars  https://www.moonsale.app/fair-launch/fl-rip-trump-rip-6mf2
+  ✓     237 chars  https://www.moonsale.app/fair-launch/fl-giti-giti-yy52
+  ✓     246 chars  https://www.moonsale.app/fair-launch/fl-moon-test-moti
   ✓    9578 chars  https://www.moonsale.app/investors/whitepaper
+  ✓   11114 chars  https://www.moonsale.app/security-score
 
 ── Failed ──
-  ✗  https://www.moonsale.app/presale/quantifi-quant-m1xy  (Navigation timeout of 30000 ms exceeded)
+  ✗  https://www.moonsale.app/ca-audits  (net::ERR_NETWORK_CHANGED at https://www.moonsale.app/ca-audits)

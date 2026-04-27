@@ -7,4 +7,4 @@ CATEGORY: tools
 # Token Vesting
 
 === CONTENT ===
-Create linear vesting schedules with TGE unlock + cliff + duration. Fee: 0.01 BNB.
+Create linear vesting schedules with TGE unlock + cliff + duration. Fee: 0.006 BNB.

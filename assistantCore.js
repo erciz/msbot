@@ -775,30 +775,10 @@ function detectTone(query) {
 }
 
 function styleAnswer(answer, tone) {
-  // Add tone-aware prefixes and formatting
-  if (tone === "casual") {
-    const prefixes = [
-      "Quick answer: ",
-      "Short version: ",
-      "Here you go: ",
-      "In brief: ",
-    ];
-    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-    return prefix + answer;
-  } else if (tone === "professional") {
-    return answer;
-  } else {
-    // friendly - add emoji or casual opener
-    const friendlyPrefixes = [
-      "✅ Answer: ",
-      "💡 Key point: ",
-      "📌 Summary: ",
-      "ℹ️ Details: ",
-      "🤝 Guidance: ",
-    ];
-    const prefix = friendlyPrefixes[Math.floor(Math.random() * friendlyPrefixes.length)];
-    return prefix + answer;
-  }
+  // Keep answers direct and polite without synthetic lead-in labels.
+  let out = String(answer || "").trim();
+  out = out.replace(/^(?:✅\s*Answer:|💡\s*Key point:|📌\s*Summary:|ℹ️\s*Details:|🤝\s*Guidance:|Quick answer:|Short version:|Here you go:|In brief:)\s*/i, "");
+  return out;
 }
 
 function sanitizeReplyText(text) {

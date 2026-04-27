@@ -15,6 +15,7 @@ CATEGORY: docs
 ## Whitelist Sales
 ## Token Locks and Vesting
 ## Sale Statuses
+## Reading the Security Score
 ## Staying Safe
 
 === CONTENT ===
@@ -31,3 +32,14 @@ If a sale fails (softcap not reached) or is cancelled by the creator, you can ge
 Some fair launches and presales have a whitelist enabled. Only wallet addresses that the creator has approved can contribute. If you try to contribute to a whitelisted sale and your wallet is not on the list, the transaction will be rejected.
 Two mechanisms protect investors after a sale ends: token locks and vesting schedules.
 Every presale and fair launch has a status badge that tells you where it is in its lifecycle.
+Every sale on MoonSale has a Security tab that shows a score out of 50 across eleven weighted categories. The score is computed from on-chain data and platform metadata, and is the same for every viewer of a project (no personalization).
+How to read it before contributing:
+For the full methodology, exact thresholds per category, and the math behind the weights, see the Security Score Methodology page.
+
+=== LISTS ===
+
+How to read it before contributing::
+ • Check critical risks first. A red “Critical Risks Detected” banner overrides any green total.
+ • Pay attention to Liquidity Lock and Team Token Lock, these are the textbook rug-pull setups when set short or absent.
+ • Read the actual values, not just the score. “180 days” is a real commitment. “30 days” is barely better than nothing.
+ • 30+/50 with no critical risks is a reasonable baseline. 40+/50 with all critical checks green is strong.

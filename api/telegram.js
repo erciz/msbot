@@ -16,6 +16,7 @@ import {
   getReplyHintForUser,
   isAiControlCommand,
   isAiPausedForUser,
+  isGroupAdminSender,
   isPrivilegedTelegramUser,
   runAiControlCommand,
 } from "../telegramUserControls.js";
@@ -137,6 +138,24 @@ async function sendTelegramMessageWithFallback(chatId, text, replyToMessageId) {
   };
 }
 
+async function resolveChatMemberStatus(chatId, userId) {
+  const response = await fetch(`https://api.telegram.org/bot${TOKEN}/getChatMember`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      user_id: userId,
+    }),
+  });
+
+  if (!response.ok) return "";
+
+  const data = await response.json();
+  if (!data?.ok) return "";
+
+  return String(data.result?.status || "");
+}
+
 async function getBotIdentity() {
   if (BOT_USERNAME_ENV) {
     return { username: BOT_USERNAME_ENV, id: 0 };
@@ -215,6 +234,18 @@ export default async function handler(req, res) {
   if (isPrivilegedTelegramUser(userId)) {
     console.log("[WEBHOOK] Skipped — privileged sender");
     res.status(200).json({ ok: true, skipped: "privileged_sender" });
+    return;
+  }
+
+  const isGroupAdmin = await isGroupAdminSender({
+    chatType,
+    chatId: message.chat?.id,
+    userId,
+    resolveMemberStatus: ({ chatId, userId }) => resolveChatMemberStatus(chatId, userId),
+  });
+  if (isGroupAdmin) {
+    console.log("[WEBHOOK] Skipped — group admin sender");
+    res.status(200).json({ ok: true, skipped: "group_admin_sender" });
     return;
   }
 

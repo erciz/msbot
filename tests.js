@@ -637,14 +637,11 @@ test("Multiple greetings produce varied responses", () => {
   assert(responses.size > 1, "Should produce varied greeting responses");
 });
 
-test("Tone detection works for casual queries", () => {
+test("Answers avoid synthetic lead-in labels", () => {
   const casual = buildAssistantReply(1, "yo whats up");
   assert(
-    casual.text.includes("Quick answer")
-      || casual.text.includes("Short version")
-      || casual.text.includes("Here you go")
-      || casual.text.includes("In brief"),
-    "Casual query should get casual tone response"
+    !/(quick answer|short version|here you go|in brief|answer:|key point:|summary:|details:|guidance:)/i.test(casual.text),
+    "Responses should stay direct without prefixed labels"
   );
 });
 

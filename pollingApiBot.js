@@ -28,6 +28,7 @@ import {
   getReplyHintForUser,
   isAiControlCommand,
   isAiPausedForUser,
+  isGroupAdminSender,
   isPrivilegedTelegramUser,
   runAiControlCommand,
 } from "./telegramUserControls.js";
@@ -241,6 +242,16 @@ async function sendReply(message, text) {
   }
 }
 
+async function resolveChatMemberStatus(chatId, userId) {
+  const data = await telegramRequest("getChatMember", {
+    chat_id: chatId,
+    user_id: userId,
+  });
+
+  if (!data?.ok) return "";
+  return String(data.result?.status || "");
+}
+
 async function handleMessage(message) {
   if (!message || !message.chat) return;
   if (message.from?.is_bot) return;
@@ -251,6 +262,17 @@ async function handleMessage(message) {
   const user = message.from?.username || message.from?.id || "unknown";
 
   if (isPrivilegedTelegramUser(userId)) {
+    metrics.messagesFiltered++;
+    return;
+  }
+
+  const isGroupAdmin = await isGroupAdminSender({
+    chatType: message.chat?.type,
+    chatId: message.chat?.id,
+    userId,
+    resolveMemberStatus: ({ chatId, userId }) => resolveChatMemberStatus(chatId, userId),
+  });
+  if (isGroupAdmin) {
     metrics.messagesFiltered++;
     return;
   }

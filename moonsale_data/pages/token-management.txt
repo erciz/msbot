@@ -7,4 +7,4 @@ CATEGORY: tools
 # Token Management
 
 === CONTENT ===
-Manage tokens. Each action charges a 0.005 BNB management fee.
+Manage tokens. Each action charges a 0.006 BNB management fee.

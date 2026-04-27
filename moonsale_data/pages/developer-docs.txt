@@ -17,6 +17,7 @@ CATEGORY: docs
 ## Token Vesting
 ## Tokenomics Creator
 ## KYC and Audit
+## Security Score
 ## Fees
 ## Tips for a Successful Launch
 
@@ -36,5 +37,20 @@ Once locked, the tokens are held by the contract until the unlock date. Each loc
 Token Vesting locks tokens and releases them gradually over time using a TGE unlock, cliff, and linear vesting model. Ideal for team allocations, advisor grants, and any situation where you want to prove long-term commitment. Go to Token Vesting in Developer Tools.
 The Tokenomics Creator is an AI-powered tool that generates a professional tokenomics allocation table and donut chart that you can export as a PDF. Use it to communicate your token distribution to investors before launch. Go to Tokenomics Creator in Developer Tools.
 Moonsale lets you apply for KYC (identity verification) and Smart Contract Audit badges that appear on your presale or fair launch page. These badges significantly increase investor confidence. Go to KYC and Audit in the sidebar.
+Every project gets an automatic Security Score visible on its detail page. Investors use it to evaluate your launch before contributing, so understanding how it works helps you plan a launch that scores high without gaming the system.
+The score is out of 50 across eleven categories. Critical-tier checks (Liquidity Lock, Team Token Lock, Contract Verified) carry the heaviest weight. To maximize your score:
+For the full list of categories with exact thresholds and the math behind every check, see the Security Score Methodology page.
 Here is a breakdown of the fees involved when launching on Moonsale. All fees are paid in the native token of the chain you are using (BNB on BSC, ETH on Ethereum/Sepolia).
 Here are some things that make presales and fair launches succeed on Moonsale.
+
+=== LISTS ===
+
+The score is out of 50 across eleven categories. Critical-tier checks (Liquidity Lock, Team Token Lock, Contract Verified) carry the heaviest weight. To maximize your score::
+ • Lock LP for 365+ days, the heaviest category, full 8 pts.
+ • Lock team tokens for 365+ days via the MoonSale Locker, another 8 pts. If you have no team allocation, the check is N/A.
+ • Use a token deployed via the MoonSale token factory, auto-verified on BscScan, full 8 pts on Contract Verified.
+ • Allocate ≥ 55% of supply to presale + liquidity combined, full 5 pts.
+ • Set liquidity ≥ 85% of raised funds, full 5 pts.
+ • Get KYC verified and submit an audit, 10 pts combined.
+ • Fill all four social fields (Twitter, Telegram, Website, Logo), full 1 pt.
+ • Set softcap ≥ 50 BNB, full 1 pt.

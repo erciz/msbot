@@ -7,4 +7,4 @@ CATEGORY: tools
 # Token Lock
 
 === CONTENT ===
-Lock tokens for a fixed period. Fee: 0.01 BNB.
+Lock tokens for a fixed period. Fee: 0.006 BNB.

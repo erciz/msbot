@@ -14,6 +14,10 @@ import { createClient } from "@supabase/supabase-js";
 
 const STOP_HOURS = Math.max(1, Number(process.env.AI_BOT_STOP_HOURS || 12) || 12);
 const STOP_DURATION_MS = STOP_HOURS * 60 * 60 * 1000;
+const GROUP_ADMIN_CACHE_TTL_MS = Math.max(
+  60_000,
+  Number(process.env.GROUP_ADMIN_CACHE_TTL_MS || 5 * 60 * 1000) || 5 * 60 * 1000
+);
 
 const SUPABASE_URL = String(process.env.SUPABASE_URL || "").trim();
 const SUPABASE_SERVICE_ROLE_KEY = String(
@@ -25,6 +29,7 @@ const COMMAND_STOP_AI = "/stopaibot";
 const COMMAND_START_AI = "/startaibot";
 
 const memoryState = new Map();
+const groupAdminStatusCache = new Map();
 
 let supabaseUnavailable = false;
 const supabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
@@ -66,6 +71,36 @@ function getPrivilegedSenderIdSet() {
     .join(",");
 
   return parseTelegramIdSet(merged);
+}
+
+function isGroupType(chatType) {
+  const type = String(chatType || "").toLowerCase();
+  return type === "group" || type === "supergroup";
+}
+
+function getGroupAdminCacheKey(chatId, userKey) {
+  return `${String(chatId)}:${userKey}`;
+}
+
+function getCachedGroupAdminStatus(chatId, userKey) {
+  const key = getGroupAdminCacheKey(chatId, userKey);
+  const cached = groupAdminStatusCache.get(key);
+  if (!cached) return null;
+
+  if (cached.expiresAt <= Date.now()) {
+    groupAdminStatusCache.delete(key);
+    return null;
+  }
+
+  return !!cached.isGroupAdmin;
+}
+
+function setCachedGroupAdminStatus(chatId, userKey, isGroupAdmin) {
+  const key = getGroupAdminCacheKey(chatId, userKey);
+  groupAdminStatusCache.set(key, {
+    isGroupAdmin: !!isGroupAdmin,
+    expiresAt: Date.now() + GROUP_ADMIN_CACHE_TTL_MS,
+  });
 }
 
 function defaultRecord() {
@@ -171,6 +206,37 @@ export function isPrivilegedTelegramUser(userId) {
   return getPrivilegedSenderIdSet().has(userKey);
 }
 
+export async function isGroupAdminSender({
+  chatType,
+  chatId,
+  userId,
+  resolveMemberStatus,
+} = {}) {
+  if (!isGroupType(chatType)) return false;
+
+  const userKey = normalizeUserId(userId);
+  if (!userKey) return false;
+
+  if (isPrivilegedTelegramUser(userKey)) return true;
+
+  const cached = getCachedGroupAdminStatus(chatId, userKey);
+  if (cached !== null) return cached;
+
+  if (typeof resolveMemberStatus !== "function") return false;
+
+  try {
+    const status = String(await resolveMemberStatus({ chatId, userId }))
+      .trim()
+      .toLowerCase();
+    const isGroupAdmin = status === "creator" || status === "administrator";
+    setCachedGroupAdminStatus(chatId, userKey, isGroupAdmin);
+    return isGroupAdmin;
+  } catch (err) {
+    console.error(`[AI CTRL] Group admin check failed: ${err?.message || err}`);
+    return false;
+  }
+}
+
 export function isAiControlCommand(command) {
   const cmd = String(command || "").toLowerCase();
   return cmd === COMMAND_STOP_AI || cmd === COMMAND_START_AI;
@@ -231,5 +297,6 @@ export function getAiStopHours() {
 
 export function __resetTelegramUserControlsForTests() {
   memoryState.clear();
+  groupAdminStatusCache.clear();
   supabaseUnavailable = false;
 }
